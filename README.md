@@ -7,3 +7,5 @@
 [Juliana lernjournal](https://github.com/julianaivn/juliana-learnjournal)
 
 [Cédric Lernjournal](https://docs.google.com/document/d/1sjepGixj1qjrJDvI2iAC3n4MBs8XpYxKUOl734pLbH0/edit?usp=sharing)
+
+[Ramis Yousaf](https://docs.google.com/document/d/1IpBIL8k73BCZEm1pUg981ChgNuum0N0ATK4NOgEF9tk/edit?usp=sharing)
