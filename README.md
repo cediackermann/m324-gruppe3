@@ -2,6 +2,8 @@
 
 ## Links
 
+[Meeting Notizen](https://docs.google.com/document/d/1DFQ4uejbCkb9C8ghXhd-MT3jdRPgdTspkR7POijM_pw/edit?usp=sharing)
+
 [Zeitlogging](https://docs.google.com/spreadsheets/d/1LVEkanA05vM1y55vMh64HatfedKJM1i-5H-1SZU55ck/edit?usp=sharing)
 
 [Juliana lernjournal](https://github.com/julianaivn/juliana-learnjournal)
