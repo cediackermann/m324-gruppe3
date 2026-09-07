@@ -5,7 +5,7 @@
 Bei den drei Wegen geht es darum, den **Flow vom Dev-Team zum Ops-Team** zu verbessern, wobei die **Feedback-Schleife** eine wichtige Rolle spielt. Die Wege stammen von Gene Kim (*The Phoenix Project*, *The DevOps Handbook*) und sind drei Blickrichtungen auf denselben Wertstrom:
 
 | Weg | Prinzip | Richtung | Leitfrage |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | Flow / Systems Thinking | Dev → Ops → Kunde | Wie fliesst Arbeit ohne Stau durch das System? |
 | 2 | Amplify Feedback Loops | Kunde → Ops → Dev | Wie kommen Erkenntnisse schnell und laut zurück? |
 | 3 | Continual Learning | fortlaufend | Wie wird aus Erkenntnissen dauerhaftes Wissen? |
@@ -35,7 +35,7 @@ Der Kern ist eine Perspektivänderung: Optimiert wird nicht das einzelne Team, s
 Information fliesst hier **von rechts nach links**, aus Produktion und Betrieb zurück zur Entwicklung. Zwei Eigenschaften zählen: **kürzer** (ein Fehler, den ein Unit Test in Sekunden meldet, kostet fast nichts; derselbe Fehler in Produktion kostet Incident, Support und Vertrauen) und **lauter** (ein Signal, das niemanden erreicht oder ignoriert wird, ist kein Feedback – rote Builds blockieren, Alerts erreichen das verantwortliche Team).
 
 | Ebene | Beispiel | Geschwindigkeit |
-|---|---|---|
+| --- | --- | --- |
 | Code | Linter/Unit Test schlägt fehl | Sekunden–Minuten |
 | Lieferung | Build oder Smoke Test scheitert | Minuten |
 | Betrieb | Fehlerrate/Antwortzeit steigt | Minuten–Stunden |
@@ -62,15 +62,15 @@ Der dritte Weg sorgt dafür, dass Verbesserung nicht vom Zufall abhängt. Er umf
 Ohne Fluss (1) gibt es nichts, worüber Feedback entstehen könnte. Ein schneller Fluss ohne Feedback (2) liefert nur schneller Fehler aus. Und beides verfällt wieder, wenn Lernen nicht institutionalisiert ist (3). Die Wege sind aber **keine Projektphasen**: Bei TechNova liefen alle Massnahmen parallel – Boards und Pipeline (1), Kennzahlen (2), Wiki und Erfahrungsberichte (3). Genau das erklärt die Wirkung, denn ein Weg allein hätte den jeweils anderen Engpass nicht beseitigt.
 
 | Weg | stärkster CALMS-Bezug | gemeinsame Grundidee |
-|---|---|---|
+| --- | --- | --- |
 | 1 – Flow | Lean, Automation | Wartezeit im Wertstrom entfernen, kleine Batches |
 | 2 – Feedback | Measurement, Sharing | Wirkung sichtbar machen statt auf Meinung vertrauen |
 | 3 – Lernen | Culture, Sharing | Fehler offen behandeln, Wissen organisational machen |
 
 ## Quellen
 
-- Gene Kim, *The Three Ways: The Principles Underpinning DevOps* – https://itrevolution.com/articles/the-three-ways-principles-underpinning-devops/
+- Gene Kim, *The Three Ways: The Principles Underpinning DevOps* – <https://itrevolution.com/articles/the-three-ways-principles-underpinning-devops/>
 - Gene Kim, Jez Humble, Patrick Debois, John Willis, *The DevOps Handbook*
-- DORA, *Software delivery performance metrics* – https://dora.dev/guides/dora-metrics/
-- Microsoft Learn, *What is DevOps?* – https://learn.microsoft.com/en-us/devops/what-is-devops
-- TBZ M324, *T1_Theorie_DevOps_Kultur.md* (Fallstudie TechNova) – https://gitlab.com/ch-tbz-it/Stud/m324/-/blob/main/Projekt/T1_Theorie_DevOps_Kultur.md
+- DORA, *Software delivery performance metrics* – <https://dora.dev/guides/dora-metrics/>
+- Microsoft Learn, *What is DevOps?* – <https://learn.microsoft.com/en-us/devops/what-is-devops>
+- TBZ M324, *T1_Theorie_DevOps_Kultur.md* (Fallstudie TechNova) – <https://gitlab.com/ch-tbz-it/Stud/m324/-/blob/main/Projekt/T1_Theorie_DevOps_Kultur.md>
