@@ -9,7 +9,7 @@ CALMS steht für **Culture, Automation, Lean, Measurement, Sharing** (Damon Edwa
 TechNova Solutions, ca. 250 Mitarbeitende, CRM-Software:
 
 | | Vorher | Nachher (ca. 18 Monate) |
-|---|---|---|
+| --- | --- | --- |
 | Releasetakt | alle 6 Monate | wöchentlich |
 | Organisation | Dev, Test, Ops isoliert | stabilisierte Zusammenarbeit |
 | Test/Deployment | manuell, fehleranfällig | CI/CD-Pipeline |
@@ -56,7 +56,7 @@ Die häufigste Verschwendung in der Softwareentwicklung ist nicht die Arbeit, so
 Entscheidend ist das Wort **genutzt** – Kennzahlen, die erhoben, aber nie ausgewertet werden, sind selbst Verschwendung. Die vier DORA-Kennzahlen:
 
 | Kennzahl | Aussage |
-|---|---|
+| --- | --- |
 | Deployment Frequency | Durchsatz und Batchgrösse |
 | Lead Time for Changes | Länge und Reibung des Wertstroms |
 | Change Fail Rate | Stabilität der Änderungen |
@@ -85,7 +85,7 @@ Sharing hat zwei Richtungen: **Fehler teilen** (ein Vorfall, aus dem nur ein Tea
 Die fünf Bereiche bedingen einander – das erklärt, warum TechNova alle Massnahmen parallel eingeführt hat:
 
 | Ohne … | … passiert Folgendes |
-|---|---|
+| --- | --- |
 | Culture | Die Pipeline automatisiert die Übergabe über die Mauer, die Silos bleiben. |
 | Automation | Gute Absichten scheitern an manueller Arbeit; Releases bleiben selten. |
 | Lean | Es wird schnell geliefert, aber weiter in grossen Paketen mit langen Wartezeiten. |
@@ -94,8 +94,8 @@ Die fünf Bereiche bedingen einander – das erklärt, warum TechNova alle Massn
 
 ## Quellen
 
-- Atlassian, *What is the CALMS framework?* – https://www.atlassian.com/devops/frameworks/calms-framework
-- Damon Edwards & John Willis, *DevOps Culture (CAMS)* – https://itrevolution.com/articles/devops-culture-part-1/
-- DORA, *Software delivery performance metrics* – https://dora.dev/guides/dora-metrics/
+- Atlassian, *What is the CALMS framework?* – <https://www.atlassian.com/devops/frameworks/calms-framework>
+- Damon Edwards & John Willis, *DevOps Culture (CAMS)* – <https://itrevolution.com/articles/devops-culture-part-1/>
+- DORA, *Software delivery performance metrics* – <https://dora.dev/guides/dora-metrics/>
 - Gene Kim et al., *The DevOps Handbook*
-- TBZ M324, *T1_Theorie_DevOps_Kultur.md* (Fallstudie TechNova) – https://gitlab.com/ch-tbz-it/Stud/m324/-/blob/main/Projekt/T1_Theorie_DevOps_Kultur.md
+- TBZ M324, *T1_Theorie_DevOps_Kultur.md* (Fallstudie TechNova) – <https://gitlab.com/ch-tbz-it/Stud/m324/-/blob/main/Projekt/T1_Theorie_DevOps_Kultur.md>
