@@ -176,13 +176,13 @@ Themen
     Quelle: <https://semver.org/lang/de/>
 - Welche Konventionen werden bei Semantic Versioning angewendet?
 
-```
+    ```
                    Minor change
                    |
                 v2.9.31
                 |     |
      Major change     Patch
-```
+    ```
 
     Quelle: <https://semver.org/lang/de/>
 
