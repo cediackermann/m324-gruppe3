@@ -52,7 +52,7 @@ Eine fehlgeschlagene Prüfung stoppt die Pipeline. Nur eine bestandene Änderung
 Beide Ansätze automatisieren Build, Tests und die Vorbereitung einer veröffentlichbaren Version. Der entscheidende Unterschied liegt direkt vor dem Produktiv-Deployment:
 
 | Frage | Continuous Delivery | Continuous Deployment |
-|---|---|---|
+| --- | --- | --- |
 | Ist jede bestandene Änderung produktionsbereit? | Ja | Ja |
 | Erfolgt das Deployment in Testumgebungen automatisch? | Ja | Ja |
 | Wer startet das Produktiv-Deployment? | Ein Mensch gibt es bewusst frei | Die Pipeline startet es automatisch |
@@ -67,7 +67,7 @@ Der Begriff **CD** ist deshalb mehrdeutig. Er kann für beide Verfahren stehen u
 ### 2.3 Vor- und Nachteile
 
 | Ansatz | Vorteile | Nachteile und Voraussetzungen |
-|---|---|---|
+| --- | --- | --- |
 | **Continuous Delivery** | Kontrollierter Zeitpunkt; Freigaben lassen sich dokumentieren; geeignet bei rechtlichen oder geschäftlichen Vorgaben | Langsameres Feedback; Änderungen können sich vor der Freigabe sammeln; ein manueller Schritt bleibt |
 | **Continuous Deployment** | Sehr schnelles Feedback; kleine und leichter überprüfbare Änderungen; kein grosser Release-Tag; weniger manuelle Routinearbeit | Fehler können automatisch live gehen; hohe Anforderungen an Tests, Monitoring und Rollback; Produkt, Support und Dokumentation müssen das Tempo mittragen |
 
@@ -136,7 +136,7 @@ Canary passt zu häufigen Releases, vielen Benutzern und einer guten Monitoring-
 ### 3.3 Blue/Green und Canary im Vergleich
 
 | Kriterium | Blue/Green | Canary |
-|---|---|---|
+| --- | --- | --- |
 | Umschaltung | Meist auf einmal | Schrittweise |
 | Betroffene Benutzer bei einem Fehler | Nach dem Wechsel potenziell alle | Anfangs nur die kleine Canary-Gruppe |
 | Rollback | Verkehr zurück auf alte Umgebung | Neuen Anteil auf 0 % setzen |
@@ -192,7 +192,7 @@ Feature Toggles trennen **Deployment** und **Release**: Der Code kann bereits pr
 Ein **Rollback** stellt nach einem fehlerhaften Deployment einen vorher funktionierenden Zustand wieder her. Ein Rollback muss vor dem Ernstfall automatisiert und getestet sein.
 
 | Strategie | Funktionsweise | Geeignet für |
-|---|---|---|
+| --- | --- | --- |
 | Vorheriges Artefakt erneut deployen | Die letzte bekannte, unveränderte Version wird aus der Registry installiert | Klassische Deployments und Container |
 | Verkehr zurückschalten | Router zeigt wieder auf Blue beziehungsweise auf die alte Canary-Version | Blue/Green und Canary |
 | Plattform-Rollback | Eine Plattform stellt eine frühere Revision wieder her, zum Beispiel `kubectl rollout undo` | Kubernetes und ähnliche Plattformen |
@@ -267,7 +267,7 @@ Kubernetes Secrets sind nicht automatisch gleichbedeutend mit vollständiger Sic
 Blue/Green und Canary gehören zur zweiten Frage. Die folgende Tabelle zeigt wichtige Betriebsformen:
 
 | Variante | Umsetzung | Benötigte Software oder Umgebung | Typischer Einsatz |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Direkt aus Quellcode auf Server | Repository holen, Abhängigkeiten installieren, auf dem Server bauen und Prozess neu starten | Linux/Windows-Server, Git, Compiler oder Runtime, Service Manager wie systemd | Kleine interne Projekte; einfach, aber schlecht reproduzierbar |
 | Fertiges Artefakt auf Server | In CI bauen, versioniertes Paket oder Binary übertragen und Dienst neu starten | CI-System, Artefakt-Repository, Server, SSH/Ansible, Runtime falls nötig | Klassische Anwendungen ohne Container |
 | Einzelner Docker-Container | Image in CI bauen, in Registry ablegen und auf einem Host starten | Docker Engine, Container Registry, Linux-Server | Ein einzelner Dienst oder kleiner Prototyp |
@@ -291,7 +291,7 @@ Weitere Einführungsstrategien sind:
 ## 8. Auswahl anhand von Anforderungen und Risiken
 
 | Projektanforderung | Sinnvolle Wahl | Begründung |
-|---|---|---|
+| --- | --- | --- |
 | Kurzer Unterbruch ist erlaubt, kleines Team | Recreate mit Docker Compose | Geringe Komplexität und tiefe Kosten |
 | Kein Unterbruch, schneller Rückweg | Blue/Green | Umschaltung und Rückschaltung sind schnell |
 | Fehler dürfen nur wenige Benutzer treffen | Canary | Kleine anfängliche Auswirkung |
@@ -350,7 +350,7 @@ A/B Testing ist für P4 nur sinnvoll, wenn es genügend echte Benutzer und eine 
 ## 11. Lernzielkontrolle
 
 | Lernziel | Woran erkennt man, dass es erreicht ist? |
-|---|---|
+| --- | --- |
 | Delivery und Deployment unterscheiden | Die manuelle beziehungsweise automatische Produktionsfreigabe korrekt erklären |
 | Blue/Green und Canary vergleichen | Umschaltung, Risiko, Ressourcenbedarf und Rollback gegenüberstellen |
 | A/B, Toggles, Rollback und Monitoring einordnen | Produkt-Experiment, Funktionssteuerung, Wiederherstellung und Betriebsbeobachtung auseinanderhalten |
