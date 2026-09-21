@@ -73,7 +73,9 @@ describe("registerHealthRoute (sqlite driver)", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(503);
-    expect(response.json<{ error: { code: string } }>().error.code).toBe("SERVICE_UNAVAILABLE");
+    expect(response.json<{ error: { code: string } }>().error.code).toBe(
+      "SERVICE_UNAVAILABLE",
+    );
     await app.close();
   });
 });
@@ -95,7 +97,10 @@ describe("registerHealthRoute (postgres driver)", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json<Record<string, unknown>>()).toEqual({ status: "ok", database: "ok" });
+    expect(response.json<Record<string, unknown>>()).toEqual({
+      status: "ok",
+      database: "ok",
+    });
     await app.close();
   });
 
@@ -120,7 +125,9 @@ describe("registerHealthRoute (postgres driver)", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(503);
-    expect(response.json<{ error: { code: string } }>().error.code).toBe("SERVICE_UNAVAILABLE");
+    expect(response.json<{ error: { code: string } }>().error.code).toBe(
+      "SERVICE_UNAVAILABLE",
+    );
     await app.close();
   });
 });

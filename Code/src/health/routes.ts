@@ -13,12 +13,17 @@ import { pingPostgres } from "../shared/postgres";
  * @param app the Fastify instance to register the route on
  * @param ctx the shared app context (its database is queried directly)
  */
-export function registerHealthRoute(app: FastifyInstance, ctx: AppContext): void {
+export function registerHealthRoute(
+  app: FastifyInstance,
+  ctx: AppContext,
+): void {
   app.get("/health", async () => {
     if (ctx.db.kind === "sqlite") {
       let row: { result: number } | null;
       try {
-        row = ctx.db.sqlite.query<{ result: number }, []>("SELECT 1 AS result").get();
+        row = ctx.db.sqlite
+          .query<{ result: number }, []>("SELECT 1 AS result")
+          .get();
       } catch {
         // A closed connection or a broken driver throws rather than
         // returning an empty result; both mean the same thing here.
@@ -27,7 +32,11 @@ export function registerHealthRoute(app: FastifyInstance, ctx: AppContext): void
       if (row?.result !== 1) {
         throw AppError.unavailable("The database did not answer as expected.");
       }
-      return { status: "ok", database: "ok", schemaVersion: currentVersion(ctx.db.sqlite) };
+      return {
+        status: "ok",
+        database: "ok",
+        schemaVersion: currentVersion(ctx.db.sqlite),
+      };
     }
 
     const ok = await pingPostgres(ctx.db.sql).catch(() => false);

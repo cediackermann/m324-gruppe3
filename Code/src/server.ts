@@ -18,7 +18,10 @@ const host = process.env.HOST ?? "0.0.0.0";
 
 const db: AppDb = process.env.DATABASE_URL
   ? { kind: "postgres", sql: createPostgresDatabase(process.env.DATABASE_URL) }
-  : { kind: "sqlite", sqlite: createDatabase(process.env.DATABASE_PATH ?? "data/app.db") };
+  : {
+      kind: "sqlite",
+      sqlite: createDatabase(process.env.DATABASE_PATH ?? "data/app.db"),
+    };
 
 const app = buildApp({
   db,
@@ -30,7 +33,9 @@ const app = buildApp({
 });
 
 app.log.info(
-  db.kind === "postgres" ? "Using Postgres database" : `Using SQLite database at ${process.env.DATABASE_PATH ?? "data/app.db"}`,
+  db.kind === "postgres"
+    ? "Using Postgres database"
+    : `Using SQLite database at ${process.env.DATABASE_PATH ?? "data/app.db"}`,
 );
 
 // Close the database cleanly on shutdown: flushes SQLite's WAL data /

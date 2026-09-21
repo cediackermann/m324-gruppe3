@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { SQL } from "bun";
-import { createPostgresDatabase, pingPostgres } from "../../src/shared/postgres";
+import {
+  createPostgresDatabase,
+  pingPostgres,
+} from "../../src/shared/postgres";
 
 /**
  * A minimal stand-in for Bun's `SQL` tagged-template client, just enough to
@@ -21,7 +24,9 @@ describe("createPostgresDatabase", () => {
    * @expected a callable client (usable as a tagged template)
    */
   test("returns a callable SQL client for a connection string", () => {
-    const sql = createPostgresDatabase("postgres://user:pass@localhost:5432/app");
+    const sql = createPostgresDatabase(
+      "postgres://user:pass@localhost:5432/app",
+    );
 
     expect(typeof sql).toBe("function");
   });

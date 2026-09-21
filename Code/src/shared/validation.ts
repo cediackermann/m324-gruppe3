@@ -12,7 +12,11 @@ import { AppError, type ErrorDetail } from "./errors";
  * @returns the parsed and typed value
  * @throws AppError 400 with one {@link ErrorDetail} per invalid field
  */
-export function parseOrThrow<T>(schema: ZodType<T>, input: unknown, message: string): T {
+export function parseOrThrow<T>(
+  schema: ZodType<T>,
+  input: unknown,
+  message: string,
+): T {
   const result = schema.safeParse(input);
   if (result.success) {
     return result.data;

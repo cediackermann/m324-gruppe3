@@ -52,7 +52,10 @@ export function createDatabase(path: string): Db {
  * @param migrations the migrations to apply; only overridden in tests
  * @returns the names of the migrations applied by this call
  */
-export function migrate(db: Db, migrations: Migration[] = MIGRATIONS): string[] {
+export function migrate(
+  db: Db,
+  migrations: Migration[] = MIGRATIONS,
+): string[] {
   const current = currentVersion(db);
   const applied: string[] = [];
 
@@ -80,6 +83,8 @@ export function migrate(db: Db, migrations: Migration[] = MIGRATIONS): string[] 
  * @returns the current schema version (0 for a fresh database)
  */
 export function currentVersion(db: Db): number {
-  const row = db.query<{ user_version: number }, []>("PRAGMA user_version").get();
+  const row = db
+    .query<{ user_version: number }, []>("PRAGMA user_version")
+    .get();
   return row?.user_version ?? 0;
 }

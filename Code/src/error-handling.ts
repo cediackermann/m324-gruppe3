@@ -28,7 +28,10 @@ export function registerErrorHandling(app: FastifyInstance): void {
     // Anything else is a bug: log it, but never leak internals to the client.
     request.log.error(error);
     const body: ErrorResponse = {
-      error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred." },
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred.",
+      },
     };
     return reply.status(500).send(body);
   });

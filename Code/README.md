@@ -1,5 +1,7 @@
 # Biketouren — Backend
 
+[![CI](https://github.com/cediackermann/m324-gruppe3/actions/workflows/ci.yml/badge.svg)](https://github.com/cediackermann/m324-gruppe3/actions/workflows/ci.yml)
+
 API backend for the M324 CI/CD practice project ("Biketouren"). This repo is
 the platform: a Fastify app, a shared error format, a database (SQLite
 locally, Postgres in production) with migrations, and the Docker/CI setup
@@ -101,13 +103,31 @@ literally `/app` — confirmed independent of ownership/permissions, and only
 there). The Dockerfile uses `/srv` instead. Re-check this if you bump the
 Bun version — it may be fixed upstream.
 
-## Tests, types, lint
+## Tests, types, lint, format
 
 ```bash
-bun test        # unit tests (bun:test), isolated — no external services needed
+bun test              # unit tests (bun:test), isolated — no external services needed
 bun run typecheck
-bun run lint
+bun run lint           # eslint.config.mjs — flat config, TS-aware
+bun run format:check    # prettier --check .; bun run format to fix
 ```
+
+## CI (GitHub Actions)
+
+`.github/workflows/ci.yml` runs on every push to `main` and every PR:
+
+1. **`test`** — `bun install --frozen-lockfile`, then format check, lint,
+   typecheck, `bun test`. No external services — this has to pass with
+   `bun:sqlite` alone.
+2. **`docker-build`** (after `test` passes) — builds the real two-service
+   stack (`docker compose up -d --build`, app + Postgres), waits for `app`'s
+   own `HEALTHCHECK` to report healthy, then asserts `GET /health` actually
+   returns `"status":"ok"` — not just "the image built".
+
+Both jobs pin Bun to `1.3.13`, matching the `Dockerfile` and local dev, so
+CI can't pass on a Bun version that behaves differently elsewhere (see the
+`/app`-working-directory bug documented above — this is exactly the kind of
+thing a version drift could silently reintroduce).
 
 ## Project layout
 
@@ -129,6 +149,8 @@ src/
 tests/unit/                bun:test, mirrors src/ (e.g. tests/unit/health/routes.test.ts)
 docs/ai-log.md              AI usage log for this project
 Dockerfile, docker-compose.yml, .dockerignore    the container path, separate from `bun run dev` (see below)
+.github/workflows/ci.yml    format/lint/typecheck/test + docker build+health, on every push/PR
+eslint.config.mjs, .prettierignore    lint + format config
 ```
 
 **Convention:** every endpoint gets its own directory under `src/` —

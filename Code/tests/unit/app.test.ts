@@ -74,7 +74,9 @@ describe("buildApp", () => {
     const response = await app.inject({ method: "GET", url: "/crash" });
 
     expect(response.statusCode).toBe(500);
-    expect(response.json<{ error: { code: string } }>().error.code).toBe("INTERNAL_ERROR");
+    expect(response.json<{ error: { code: string } }>().error.code).toBe(
+      "INTERNAL_ERROR",
+    );
     await app.close();
   });
 });

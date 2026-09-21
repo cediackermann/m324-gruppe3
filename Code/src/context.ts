@@ -17,8 +17,7 @@ import type { Db as SqliteDb } from "./shared/db";
  * pattern.
  */
 export type AppDb =
-  | { kind: "sqlite"; sqlite: SqliteDb }
-  | { kind: "postgres"; sql: SQL };
+  { kind: "sqlite"; sqlite: SqliteDb } | { kind: "postgres"; sql: SQL };
 
 /**
  * Infrastructure that every feature module shares. It is built by

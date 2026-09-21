@@ -85,11 +85,10 @@ describe("createDatabase", () => {
     migrate(first, EXAMPLE_MIGRATIONS);
     migrate(second, EXAMPLE_MIGRATIONS);
 
-    first.run("INSERT INTO example_items (id, name, created_at) VALUES (?, ?, ?)", [
-      "i1",
-      "first",
-      "2026-01-15T10:00:00.000Z",
-    ]);
+    first.run(
+      "INSERT INTO example_items (id, name, created_at) VALUES (?, ?, ?)",
+      ["i1", "first", "2026-01-15T10:00:00.000Z"],
+    );
 
     expect(first.query("SELECT id FROM example_items").all()).toHaveLength(1);
     expect(second.query("SELECT id FROM example_items").all()).toHaveLength(0);
@@ -109,7 +108,9 @@ describe("migrate", () => {
 
     const applied = migrate(db, EXAMPLE_MIGRATIONS);
 
-    expect(applied).toEqual(EXAMPLE_MIGRATIONS.map((migration) => migration.name));
+    expect(applied).toEqual(
+      EXAMPLE_MIGRATIONS.map((migration) => migration.name),
+    );
     expect(tableNames(db)).toEqual(["example_items"]);
     db.close();
   });
@@ -145,16 +146,18 @@ describe("migrate on an existing database (release upgrade)", () => {
   test("applies only new migrations and keeps existing data", () => {
     const db = createDatabase(":memory:");
     migrate(db, EXAMPLE_MIGRATIONS);
-    db.run("INSERT INTO example_items (id, name, created_at) VALUES (?, ?, ?)", [
-      "i1",
-      "first",
-      "2026-01-15T10:00:00.000Z",
-    ]);
+    db.run(
+      "INSERT INTO example_items (id, name, created_at) VALUES (?, ?, ?)",
+      ["i1", "first", "2026-01-15T10:00:00.000Z"],
+    );
 
     // Stands in for a migration a later release adds to the list.
     const nextRelease: Migration[] = [
       ...EXAMPLE_MIGRATIONS,
-      { name: "002_add_note", sql: "ALTER TABLE example_items ADD COLUMN note TEXT" },
+      {
+        name: "002_add_note",
+        sql: "ALTER TABLE example_items ADD COLUMN note TEXT",
+      },
     ];
     const applied = migrate(db, nextRelease);
 
@@ -177,7 +180,10 @@ describe("migrate on an existing database (release upgrade)", () => {
     migrate(db, EXAMPLE_MIGRATIONS);
     const broken: Migration[] = [
       ...EXAMPLE_MIGRATIONS,
-      { name: "002_broken", sql: "ALTER TABLE does_not_exist ADD COLUMN nope TEXT" },
+      {
+        name: "002_broken",
+        sql: "ALTER TABLE does_not_exist ADD COLUMN nope TEXT",
+      },
     ];
 
     expect(() => migrate(db, broken)).toThrow();

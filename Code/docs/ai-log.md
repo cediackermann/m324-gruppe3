@@ -457,3 +457,65 @@ mit einer Verbindungs-URL getestet (kein echter Verbindungsaufbau nötig,
 **Testergebnis (selbst ausgeführt):**
 - `bun test` → 25 pass / 0 fail, 49 expect() calls (vorher 21 pass).
 - `bunx tsc --noEmit` → keine Fehler.
+
+---
+
+## 2026-09-21 — GitHub Actions CI (lint/format/typecheck/test + Docker)
+
+**Werkzeug:** Claude Code (Sonnet 5)
+
+**Prompt (Kurzfassung):** "Update the testing platform" → präzisiert per
+Rückfrage: CI/CD für GitHub (nicht GitLab wie im ursprünglichen Plan
+skizziert — bestätigt via `git remote -v`: Repo liegt tatsächlich auf
+GitHub, damit ist die offene Frage "GitLab vs. GitHub" aus dem Projektplan
+beantwortet).
+
+**Nebenbefund vor der eigentlichen Arbeit:** `bun run lint` war komplett
+kaputt — kein `eslint.config.*` vorhanden, ESLint 10 hatte nichts zum
+Ausführen. Zusätzlich fehlten `@eslint/js` und `typescript-eslint` als
+direkte Abhängigkeiten (nur transitiv vorhanden).
+
+**Durchgeführt:**
+- `typescript-eslint` + `@eslint/js` installiert, `eslint.config.mjs`
+  (flat config, TS-aware) ergänzt. `.ts`-Endung für die Config selbst
+  scheiterte an ESLint 10s Anforderung nach `jiti` für TS-Configs → auf
+  `.mjs` gewechselt.
+- `prettier --write .` einmalig laufen lassen; `.prettierignore` legt
+  Markdown (`*.md`) bewusst aus, damit handgeschriebene Prosa (README,
+  CLAUDE.md, ai-log.md) nicht von Prettiers Markdown-Regeln umformatiert
+  wird.
+- `package.json`: `format`/`format:check`-Skripte ergänzt.
+- `.github/workflows/ci.yml`: zwei Jobs.
+  1. `test` — `bun install --frozen-lockfile`, dann format-check, lint,
+     typecheck, `bun test`. Läuft ohne externe Dienste (nur `bun:sqlite`),
+     passend zur Vorgabe isolierter Unit-Tests.
+  2. `docker-build` (nach `test`) — baut den echten Zwei-Service-Stack
+     (`docker compose up -d --build`), wartet auf den `HEALTHCHECK` des
+     `app`-Containers, prüft dann `GET /health` wirklich auf
+     `"status":"ok"` statt nur "Image gebaut".
+- Beide Jobs pinnen Bun exakt auf `1.3.13` (wie `Dockerfile` und lokale
+  Entwicklung) — bewusst wegen des zuvor gefundenen Bun-`/app`-Bugs: eine
+  andere Bun-Version könnte sich dort wieder anders verhalten.
+
+**Nötige Korrekturen:**
+- Der Healthcheck-Wartepolling-Schritt im Workflow verwendete zunächst eine
+  Variable namens `status` → beim lokalen Testen unter zsh schlug das mit
+  `read-only variable: status` fehl (zsh reserviert `$status`). GitHub
+  Actions führt `run:`-Schritte aber unter `bash` aus, wo das kein Problem
+  gewesen wäre — trotzdem zur Sicherheit auf `health_status` umbenannt.
+
+**Testergebnis (selbst ausgeführt, jeder Workflow-Schritt einzeln lokal
+nachvollzogen, nicht nur der Workflow-Text geschrieben):**
+- `bun install --frozen-lockfile`, `bun run format:check`, `bun run lint`,
+  `bun run typecheck`, `bun test` → alle grün (25 pass / 0 fail, 49
+  expect() calls).
+- `docker compose up -d --build` → `db` wird zuerst gesund, `app` danach;
+  Wartepolling auf `app`'s eigenen `HEALTHCHECK` (aus dem Dockerfile) →
+  "healthy" nach ~2s; `curl -sf localhost:3000/health` →
+  `{"status":"ok","database":"ok"}`, Grep auf `"status":"ok"` erfolgreich.
+- Danach `docker compose down -v`, Test-Images bereinigt.
+
+**README aktualisiert:** neuer Abschnitt "CI (GitHub Actions)" mit
+Job-Beschreibung, CI-Badge oben im README (zeigt den echten Workflow-Status
+von `cediackermann/m324-gruppe3`), Projektstruktur um `.github/`,
+`eslint.config.mjs`, `.prettierignore` ergänzt.

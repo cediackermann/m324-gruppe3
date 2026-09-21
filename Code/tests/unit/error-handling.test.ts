@@ -42,7 +42,10 @@ describe("registerErrorHandling", () => {
 
     expect(response.statusCode).toBe(500);
     expect(response.json<Record<string, unknown>>()).toEqual({
-      error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred." },
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred.",
+      },
     });
     expect(response.body).not.toContain("hunter2");
     await app.close();
@@ -67,7 +70,9 @@ describe("registerErrorHandling", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json<{ error: { code: string } }>().error.code).toBe("VALIDATION_ERROR");
+    expect(response.json<{ error: { code: string } }>().error.code).toBe(
+      "VALIDATION_ERROR",
+    );
     await app.close();
   });
 
@@ -80,10 +85,15 @@ describe("registerErrorHandling", () => {
     const app = Fastify({ logger: false });
     registerErrorHandling(app);
 
-    const response = await app.inject({ method: "GET", url: "/does-not-exist" });
+    const response = await app.inject({
+      method: "GET",
+      url: "/does-not-exist",
+    });
 
     expect(response.statusCode).toBe(404);
-    expect(response.json<{ error: { code: string } }>().error.code).toBe("NOT_FOUND");
+    expect(response.json<{ error: { code: string } }>().error.code).toBe(
+      "NOT_FOUND",
+    );
     await app.close();
   });
 });
