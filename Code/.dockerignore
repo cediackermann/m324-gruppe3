@@ -1,0 +1,11 @@
+node_modules
+tests
+data
+docs
+.git
+.gitignore
+*.db
+*.db-wal
+*.db-shm
+README.md
+CLAUDE.md
