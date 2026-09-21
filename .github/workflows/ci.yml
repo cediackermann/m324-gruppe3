@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["Code/**", ".github/workflows/ci.yml"]
+  pull_request:
+    paths: ["Code/**", ".github/workflows/ci.yml"]
+
+# A newer push on the same branch/PR cancels the previous run, so CI doesn't
+# queue up stale runs while you push fixes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The Bun project lives in Code/, one level below this monorepo's root
+# (which also holds Theorie/, Dokumentation/, ...) — every run: step below
+# operates on that subdirectory.
+defaults:
+  run:
+    working-directory: Code
+
+jobs:
+  # Fast checks: format, lint, types, unit tests. No external services —
+  # every check here has to work in complete isolation (bun:sqlite only),
+  # per the project's own test-isolation requirement.
+  test:
+    name: Format, lint, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Pinned to match the Dockerfile and local dev, so CI can't pass on
+          # a Bun version that behaves differently elsewhere.
+          bun-version: "1.3.13"
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run format:check
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun test
+
+  # Slow(er) check: the app actually has to boot in the containerized,
+  # two-service (app + Postgres) shape it runs in for real, and answer a
+  # genuine health check — not just "the image built".
+  docker-build:
+    name: Docker build + health check
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for the app to report healthy
+        run: |
+          for i in $(seq 1 30); do
+            health_status=$(docker inspect --format '{{.State.Health.Status}}' code-app-1 2>/dev/null || echo "starting")
+            if [ "$health_status" = "healthy" ]; then
+              echo "app is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "app never became healthy" >&2
+          docker compose logs
+          exit 1
+
+      - name: Check /health responds ok
+        run: |
+          curl -sf localhost:3000/health | tee /dev/stderr | grep -q '"status":"ok"'
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
