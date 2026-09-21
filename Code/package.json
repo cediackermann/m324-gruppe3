@@ -1,12 +1,14 @@
 {
   "name": "code",
-  "module": "index.ts",
+  "module": "src/server.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/bun": "^1.4.2",
     "eslint": "^10.11.0",
-    "prettier": "^3.9.8"
+    "prettier": "^3.9.8",
+    "typescript-eslint": "^8.70.0"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -19,6 +21,9 @@
     "dev": "bun --watch src/server.ts",
     "start": "bun src/server.ts",
     "test": "bun test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   }
 }

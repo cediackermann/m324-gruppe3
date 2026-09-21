@@ -1,0 +1,40 @@
+services:
+  # The web server. Stateless itself — everything it needs to persist lives
+  # in the db service below, not in this container.
+  app:
+    build: .
+    # Tag by commit so a rollback can name an exact image (see T4).
+    image: biketouren:${APP_VERSION:-dev}
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Postgres, the same driver used in production (see src/shared/postgres.ts
+  # and src/server.ts). Local dev/CI still default to bun:sqlite (no
+  # DATABASE_URL set) and never touch this service — it only exists to run
+  # the actual containerized stack end to end, e.g. for the integration
+  # tests or a manual check before deploying.
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    volumes:
+      # Named volume: the container is replaced on every release, the
+      # volume is not, so this is what actually persists the data.
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db-data:
