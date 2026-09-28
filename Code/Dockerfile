@@ -23,8 +23,7 @@ COPY --from=deps /srv/node_modules ./node_modules
 COPY package.json bun.lock ./
 COPY src ./src
 
-# The database lives OUTSIDE the app directory, on a mounted volume.
-# Anything written into the image itself is lost with the next release.
+# The SQLite fallback can use a mounted volume. Docker Compose uses Postgres.
 RUN mkdir -p /data && chown -R bun:bun /data
 VOLUME ["/data"]
 

@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, "feature/**", "fix/**"]
     paths: ["Code/**", ".github/workflows/ci.yml"]
   pull_request:
     paths: ["Code/**", ".github/workflows/ci.yml"]
+  workflow_dispatch:
 
 # A newer push on the same branch/PR cancels the previous run, so CI doesn't
 # queue up stale runs while you push fixes.
@@ -21,11 +22,8 @@ defaults:
     working-directory: Code
 
 jobs:
-  # Fast checks: format, lint, types, unit tests. No external services —
-  # every check here has to work in complete isolation (bun:sqlite only),
-  # per the project's own test-isolation requirement.
   test:
-    name: Format, lint, typecheck, test
+    name: Static checks and tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,38 +39,44 @@ jobs:
       - run: bun run format:check
       - run: bun run lint
       - run: bun run typecheck
-      - run: bun test
+      - run: bun test tests/unit
+      - run: bun test tests/integration
 
-  # Slow(er) check: the app actually has to boot in the containerized,
-  # two-service (app + Postgres) shape it runs in for real, and answer a
-  # genuine health check — not just "the image built".
   docker-build:
-    name: Docker build + health check
+    name: Docker build and system test
     runs-on: ubuntu-latest
     needs: test
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and start the stack
-        run: docker compose up -d --build
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.13"
 
-      - name: Wait for the app to report healthy
+      - name: Build versioned service image
+        env:
+          APP_VERSION: ${{ github.sha }}
+        run: docker compose build bikes
+
+      - name: Start both services and databases
+        env:
+          APP_VERSION: ${{ github.sha }}
+        run: docker compose up -d --no-build
+
+      - name: Wait for both APIs
         run: |
           for i in $(seq 1 30); do
-            health_status=$(docker inspect --format '{{.State.Health.Status}}' code-app-1 2>/dev/null || echo "starting")
-            if [ "$health_status" = "healthy" ]; then
-              echo "app is healthy"
+            if curl -fsS localhost:3000/health && curl -fsS localhost:3001/health; then
               exit 0
             fi
             sleep 2
           done
-          echo "app never became healthy" >&2
+          echo "services never became healthy" >&2
           docker compose logs
           exit 1
 
-      - name: Check /health responds ok
-        run: |
-          curl -sf localhost:3000/health | tee /dev/stderr | grep -q '"status":"ok"'
+      - name: Check bike and tour workflow
+        run: bun tests/system/smoke.ts
 
       - name: Show logs on failure
         if: failure()

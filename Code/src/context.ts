@@ -5,7 +5,7 @@ import type { Db as SqliteDb } from "./shared/db";
 /**
  * The database handed to feature modules through {@link AppContext}.
  *
- * There are two drivers, picked by `src/server.ts` from the environment:
+ * There are two drivers, picked by each service entry point from the environment:
  * - `"sqlite"` — a local `bun:sqlite` file. Used for local dev and every
  *   unit test, because it needs no external service and no network.
  * - `"postgres"` — a Bun `SQL` client (Neon/Vercel Postgres). Used in

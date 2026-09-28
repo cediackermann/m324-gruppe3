@@ -43,8 +43,7 @@ export function registerHealthRoute(
     if (!ok) {
       throw AppError.unavailable("The database did not answer as expected.");
     }
-    // Postgres migrations aren't set up yet (see shared/postgres.ts), so
-    // there is no schema version to report for this driver yet.
+    // The readiness response does not expose PostgreSQL migration details.
     return { status: "ok", database: "ok" };
   });
 }

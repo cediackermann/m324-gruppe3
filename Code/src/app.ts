@@ -29,8 +29,8 @@ export interface AppOptions {
  * and the given feature modules, all wired to one {@link AppContext}.
  *
  * It deliberately does NOT call `listen()`: tests drive the app with
- * `app.inject()` without opening a port, `src/server.ts` is the only place
- * that starts a real server.
+ * `app.inject()` without opening a port. Each service entry point starts
+ * its own real server.
  *
  * @param options modules and overridable infrastructure
  * @returns the configured, not yet listening Fastify instance

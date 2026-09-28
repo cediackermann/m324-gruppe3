@@ -18,7 +18,10 @@ export type Db = Database;
  *   database (used by every test, so tests never share state)
  * @returns the ready-to-use, migrated database handle
  */
-export function createDatabase(path: string): Db {
+export function createDatabase(
+  path: string,
+  migrations: Migration[] = MIGRATIONS,
+): Db {
   // SQLite does not create the parent directory of the file itself, so a
   // fresh checkout with no `data/` folder yet would fail right here.
   if (path !== ":memory:") {
@@ -35,7 +38,7 @@ export function createDatabase(path: string): Db {
   db.exec("PRAGMA journal_mode = WAL");
   db.exec("PRAGMA foreign_keys = ON");
 
-  migrate(db);
+  migrate(db, migrations);
   return db;
 }
 

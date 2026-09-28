@@ -1,10 +1,8 @@
 /**
  * Ordered database migrations.
  *
- * This module is deliberately schema-agnostic: the backend here only
- * provides the platform (Fastify app, error handling, database, CI/CD).
- * The actual tables belong to the feature modules built on top of it
- * (bikes, tours, ...) and are added as migrations by whoever builds them.
+ * Each service supplies its own migration list when opening its database.
+ * The default list is empty for callers that only need the shared platform.
  *
  * Each entry is applied exactly once, in order. The index of an applied
  * migration is stored in SQLite's `user_version` pragma, so the app knows
@@ -19,8 +17,7 @@
  * export const bikeMigrations: Migration[] = [
  *   { name: "001_create_bikes", sql: "CREATE TABLE bikes (...)" },
  * ];
- * // registered once in src/shared/migrations.ts:
- * // export const MIGRATIONS: Migration[] = [...bikeMigrations, ...tourMigrations];
+ * // passed to createDatabase(path, bikeMigrations) by the bike service
  */
 export interface Migration {
   /** Short description, shown in the log when the migration runs. */
@@ -30,7 +27,6 @@ export interface Migration {
 }
 
 /**
- * All migrations applied to the app's database, in order. Empty for now —
- * feature modules append their own migrations here once they exist.
+ * Default migrations for a platform-only database.
  */
 export const MIGRATIONS: Migration[] = [];

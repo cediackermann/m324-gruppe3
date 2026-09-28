@@ -1,5 +1,17 @@
 # AI-Log
 
+## 2026-09-28 - Bike and tour services and CI review
+
+**Prompt:** Implement issues #5-#12, the P2 endpoint tests, and the P3 CI requirements using the existing project structure.
+
+**AI observation:** The current backend has no bike or tour routes. The Docker CI job only verifies `/health`, so it cannot detect a broken cross-service workflow.
+
+**Decision and changes:** Keep the existing Fastify, repository, migration, and error patterns. Start bikes and tours as separate services with separate databases. Validate tour bikes through the bike API. Add isolated endpoint tests, a real HTTP integration test, and a Compose smoke test in the root CI workflow.
+
+**Own validation:** 40 unit tests, 3 integration tests, typecheck, lint, and formatting passed locally. The Docker image built and the two-service PostgreSQL smoke test passed. Its first run exposed a duplicate-frame mapping error: Bun's PostgreSQL driver reports SQLSTATE `23505` in `errno`. The mapping was corrected and the smoke test passed on the next run. Hosted GitHub Actions logs and pull request review must be recorded after the branch is pushed; they are not asserted here. See [`ci.md`](ci.md) for the pipeline comparison.
+
+---
+
 Dokumentation der KI-Nutzung gemäss den Vorgaben der Praxisarbeit P2.
 Pro Eintrag: Prompt (Kurzfassung), übernommene Vorschläge, nötige Korrekturen,
 Testergebnisse, eigene Entscheidungen.

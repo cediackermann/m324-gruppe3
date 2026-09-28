@@ -19,7 +19,9 @@
   },
   "scripts": {
     "dev": "bun --watch src/server.ts",
+    "dev:tours": "bun --watch src/tours/server.ts",
     "start": "bun src/server.ts",
+    "start:tours": "bun src/tours/server.ts",
     "test": "bun test",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
