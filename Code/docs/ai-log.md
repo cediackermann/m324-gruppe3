@@ -8,7 +8,7 @@
 
 **Decision and changes:** Keep the existing Fastify, repository, migration, and error patterns. Start bikes and tours as separate services with separate databases. Validate tour bikes through the bike API. Add isolated endpoint tests, a real HTTP integration test, and a Compose smoke test in the root CI workflow.
 
-**Own validation:** 40 unit tests, 3 integration tests, typecheck, lint, and formatting passed locally. The Docker image built and the two-service PostgreSQL smoke test passed. Its first run exposed a duplicate-frame mapping error: Bun's PostgreSQL driver reports SQLSTATE `23505` in `errno`. The mapping was corrected and the smoke test passed on the next run. Hosted GitHub Actions logs and pull request review must be recorded after the branch is pushed; they are not asserted here. See [`ci.md`](ci.md) for the pipeline comparison.
+**Own validation:** 40 unit tests, 3 integration tests, typecheck, lint, and formatting passed locally. The Docker image built and the two-service PostgreSQL smoke test passed. Its first run exposed a duplicate-frame mapping error: Bun's PostgreSQL driver reports SQLSTATE `23505` in `errno`. The mapping was corrected and the smoke test passed on the next run. [GitHub Actions run #2](https://github.com/cediackermann/m324-gruppe3/actions/runs/36397835527) passed both jobs for commit `2100160`. Pull request review remains pending. See [`ci.md`](ci.md) for the pipeline comparison.
 
 ---
 
