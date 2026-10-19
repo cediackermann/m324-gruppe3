@@ -12,9 +12,10 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    # Deploys are triggered only by the CI pipeline's deploy job (deploy
-    # hook), after all tests have passed.
-    autoDeployTrigger: "off"
+    # Render deploys a new commit on main only after all of its GitHub
+    # Actions checks have passed, and skips it if any check fails.
+    branch: main
+    autoDeployTrigger: checksPass
     envVars:
       - key: DATABASE_URL
         sync: false

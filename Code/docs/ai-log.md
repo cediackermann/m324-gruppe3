@@ -1,5 +1,17 @@
 # AI-Log
 
+## 2026-10-19 - Deploy through Render auto-deploy instead of a deploy job
+
+**Prompt:** Render triggers deployments automatically, so remove the deploy pipeline on our side.
+
+**AI observation:** Render's default trigger ("On Commit") deploys a commit on `main` before CI has finished, so untested code could go live; the first merge (`9ddca56`) was deployed that way while the pipeline's deploy job was still running. Render's "After CI checks pass" trigger waits for all GitHub checks on the commit and skips it if one fails. With our deploy job removed, Render no longer waits on a job that waits for Render, so that trigger can be used. The trade-off is losing the automatic version check and rollback.
+
+**Decision and changes:** The `deploy` job, `scripts/render-deploy.sh`, and `scripts/wait-for-version.sh` were removed; `main` runs are cancelled by newer pushes again. `render.yaml` uses `autoDeployTrigger: checksPass` on `main`. `/health` keeps reporting `version`, so the live commit stays visible. Rollback is manual (Render dashboard or a revert). `docs/cd.md` and the README describe the new flow. The `RENDER_DEPLOY_HOOK_URL` secret and `PRODUCTION_URL` variable are no longer used.
+
+**Own validation:** Format check, typecheck, lint, and unit tests passed, and both YAML files parse. Render's auto-deploy setting has to be changed in the dashboard; the first deploy through it is still to be observed.
+
+---
+
 ## 2026-10-19 - Continuous deployment to Render and Neon
 
 **Prompt:** Set up continuous deployment for free with Neon (database) and Render (API).
