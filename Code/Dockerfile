@@ -23,18 +23,13 @@ COPY --from=deps /srv/node_modules ./node_modules
 COPY package.json bun.lock ./
 COPY src ./src
 
-# The database lives OUTSIDE the app directory, on a mounted volume.
-# Anything written into the image itself is lost with the next release.
-RUN mkdir -p /data && chown -R bun:bun /data
-VOLUME ["/data"]
-
+# DATABASE_URL is required and set by Docker Compose or the hosting platform.
 USER bun
-ENV DATABASE_PATH=/data/app.db \
-    PORT=3000 \
+ENV PORT=3000 \
     HOST=0.0.0.0
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD bun -e "const r = await fetch('http://127.0.0.1:3000/health'); process.exit(r.ok ? 0 : 1)"
+  CMD bun -e "const r = await fetch('http://127.0.0.1:' + (process.env.PORT ?? 3000) + '/health'); process.exit(r.ok ? 0 : 1)"
 
 CMD ["bun", "src/server.ts"]

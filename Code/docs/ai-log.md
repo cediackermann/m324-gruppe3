@@ -1,5 +1,28 @@
 # AI-Log
 
+## 2026-10-19 - Single service with PostgreSQL only
+
+**Prompt:** Make the project simpler to host for continuous deployment: merge the bike and tour services into one service with different routes, and use PostgreSQL only.
+
+**AI observation:** Two services with two databases need two hosted web services, two databases, and an HTTP call between them, which free hosting tiers handle poorly (separate cold starts). `buildApp()` already accepted several modules, so the merge needed no new structure. With SQLite removed, the integration tests need a real PostgreSQL database.
+
+**Decision and changes:** One entry point (`src/server.ts`) registers both modules on port 3000. The tour module checks bikes through the bike repository instead of HTTP (`BIKE_SERVICE_URL` and the bike client were removed). All SQLite code, the driver switch, and the SQLite migration tests were removed; `src/shared/db.ts` holds the PostgreSQL client, the name-based migrations, and the ping. Compose and CI run one API and one database; the CI test job starts a PostgreSQL service container. Integration tests use `TEST_DATABASE_URL` only and refuse database names without `test`, because they delete all data.
+
+**Own validation:** 31 unit tests and 7 integration tests (real PostgreSQL 16 from Compose) passed, as did typecheck, lint, and formatting. The Docker image built, the container became healthy, and the smoke test passed against it.
+
+---
+## 2026-09-28 - Bike and tour services and CI review
+
+**Prompt:** Implement issues #5-#12, the P2 endpoint tests, and the P3 CI requirements using the existing project structure.
+
+**AI observation:** The current backend has no bike or tour routes. The Docker CI job only verifies `/health`, so it cannot detect a broken cross-service workflow.
+
+**Decision and changes:** Keep the existing Fastify, repository, migration, and error patterns. Start bikes and tours as separate services with separate databases. Validate tour bikes through the bike API. Add isolated endpoint tests, a real HTTP integration test, and a Compose smoke test in the root CI workflow.
+
+**Own validation:** 40 unit tests, 3 integration tests, typecheck, lint, and formatting passed locally. The Docker image built and the two-service PostgreSQL smoke test passed. Its first run exposed a duplicate-frame mapping error: Bun's PostgreSQL driver reports SQLSTATE `23505` in `errno`. The mapping was corrected and the smoke test passed on the next run. [GitHub Actions run #2](https://github.com/cediackermann/m324-gruppe3/actions/runs/36397835527) passed both jobs for commit `2100160`. Pull request review remains pending. See [`ci.md`](ci.md) for the pipeline comparison.
+
+---
+
 Dokumentation der KI-Nutzung gemäss den Vorgaben der Praxisarbeit P2.
 Pro Eintrag: Prompt (Kurzfassung), übernommene Vorschläge, nötige Korrekturen,
 Testergebnisse, eigene Entscheidungen.
