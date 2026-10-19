@@ -1,12 +1,11 @@
-const bikesUrl = process.env.BIKES_URL ?? "http://localhost:3000";
-const toursUrl = process.env.TOURS_URL ?? "http://localhost:3001";
+const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 
 function check(condition: boolean, message: string): void {
   if (!condition) throw new Error(message);
 }
 
 const frameNumber = `CI-${crypto.randomUUID()}`;
-const bikeResponse = await fetch(`${bikesUrl}/bikes`, {
+const bikeResponse = await fetch(`${baseUrl}/bikes`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
@@ -21,7 +20,7 @@ check(
 );
 const bike = (await bikeResponse.json()) as { id: string };
 
-const bikes = (await (await fetch(`${bikesUrl}/bikes`)).json()) as {
+const bikes = (await (await fetch(`${baseUrl}/bikes`)).json()) as {
   bikes: { id: string }[];
 };
 check(
@@ -29,14 +28,14 @@ check(
   "Bike is missing from the list.",
 );
 
-const duplicate = await fetch(`${bikesUrl}/bikes`, {
+const duplicate = await fetch(`${baseUrl}/bikes`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({ type: "Another bike", frameNumber, wheelHeight: 15 }),
 });
 check(duplicate.status === 409, "Duplicate frame number was accepted.");
 
-const tourResponse = await fetch(`${toursUrl}/tours`, {
+const tourResponse = await fetch(`${baseUrl}/tours`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
@@ -54,7 +53,7 @@ check(
 );
 const tour = (await tourResponse.json()) as { id: string };
 
-const tours = (await (await fetch(`${toursUrl}/tours`)).json()) as {
+const tours = (await (await fetch(`${baseUrl}/tours`)).json()) as {
   tours: { id: string }[];
 };
 check(
@@ -62,7 +61,7 @@ check(
   "Tour is missing from the list.",
 );
 
-const missingBike = await fetch(`${toursUrl}/tours`, {
+const missingBike = await fetch(`${baseUrl}/tours`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
@@ -75,4 +74,4 @@ const missingBike = await fetch(`${toursUrl}/tours`, {
   }),
 });
 check(missingBike.status === 400, "Unknown bike was accepted.");
-console.log("Bike and tour service smoke test passed.");
+console.log("Bike and tour smoke test passed.");

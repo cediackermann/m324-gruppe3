@@ -1,15 +1,16 @@
+import { bikeMigrations } from "../bikes/migrations";
+import { tourMigrations } from "../tours/migrations";
+
 /**
- * Ordered database migrations.
+ * A database migration.
  *
- * Each service supplies its own migration list when opening its database.
- * The default list is empty for callers that only need the shared platform.
- *
- * Each entry is applied exactly once, in order. The index of an applied
- * migration is stored in SQLite's `user_version` pragma, so the app knows
- * which migrations are already in place.
+ * Each entry is applied exactly once, in order. Applied migrations are
+ * recorded by name in the `schema_migrations` table, so the app knows which
+ * ones are already in place.
  *
  * Rules for the team:
  * - Never edit a migration that is already merged — append a new one.
+ * - Names must be unique across all modules.
  * - One migration may contain several statements.
  *
  * @example
@@ -17,16 +18,14 @@
  * export const bikeMigrations: Migration[] = [
  *   { name: "001_create_bikes", sql: "CREATE TABLE bikes (...)" },
  * ];
- * // passed to createDatabase(path, bikeMigrations) by the bike service
+ * // then appended to MIGRATIONS below
  */
 export interface Migration {
-  /** Short description, shown in the log when the migration runs. */
+  /** Unique name, stored once the migration has run. */
   name: string;
   /** The SQL applied by this migration. */
   sql: string;
 }
 
-/**
- * Default migrations for a platform-only database.
- */
-export const MIGRATIONS: Migration[] = [];
+/** Every migration of the app, in the order they are applied. */
+export const MIGRATIONS: Migration[] = [...bikeMigrations, ...tourMigrations];

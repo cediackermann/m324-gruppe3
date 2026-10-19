@@ -1,4 +1,3 @@
-import type { SQL } from "bun";
 import type { Db } from "../shared/db";
 import { AppError } from "../shared/errors";
 import type { Bike } from "./model";
@@ -6,6 +5,7 @@ import type { Bike } from "./model";
 export interface BikeRepository {
   create(bike: Bike): Promise<void>;
   list(): Promise<Bike[]>;
+  exists(id: string): Promise<boolean>;
 }
 
 type BikeRow = {
@@ -28,51 +28,19 @@ function toBike(row: BikeRow): Bike {
 
 function isDuplicate(error: unknown): boolean {
   const cause = error as {
-    code?: string;
     errno?: string | number;
     constraint?: string;
   };
+  // Bun's Postgres driver reports the SQLSTATE (23505 = unique violation)
+  // in `errno`.
   return (
-    cause?.code === "SQLITE_CONSTRAINT_UNIQUE" ||
-    (String(cause?.errno) === "23505" &&
-      cause?.constraint === "bikes_frame_number_key")
+    String(cause?.errno) === "23505" &&
+    cause?.constraint === "bikes_frame_number_key"
   );
 }
 
-export class SqliteBikeRepository implements BikeRepository {
-  constructor(private readonly db: Db) {}
-
-  async create(bike: Bike): Promise<void> {
-    try {
-      this.db.run(
-        "INSERT INTO bikes (id, type, frame_number, wheel_height, created_at) VALUES (?, ?, ?, ?, ?)",
-        [
-          bike.id,
-          bike.type,
-          bike.frameNumber,
-          bike.wheelHeight,
-          bike.createdAt,
-        ],
-      );
-    } catch (error) {
-      if (isDuplicate(error))
-        throw AppError.conflict("Frame number already exists.");
-      throw error;
-    }
-  }
-
-  async list(): Promise<Bike[]> {
-    return this.db
-      .query<BikeRow, []>(
-        "SELECT id, type, frame_number, wheel_height, created_at FROM bikes ORDER BY created_at DESC, id",
-      )
-      .all()
-      .map(toBike);
-  }
-}
-
 export class PostgresBikeRepository implements BikeRepository {
-  constructor(private readonly sql: SQL) {}
+  constructor(private readonly sql: Db) {}
 
   async create(bike: Bike): Promise<void> {
     try {
@@ -90,5 +58,10 @@ export class PostgresBikeRepository implements BikeRepository {
     const rows = await this
       .sql`SELECT id, type, frame_number, wheel_height, created_at FROM bikes ORDER BY created_at DESC, id`;
     return (rows as BikeRow[]).map(toBike);
+  }
+
+  async exists(id: string): Promise<boolean> {
+    const rows = await this.sql`SELECT 1 FROM bikes WHERE id = ${id}`;
+    return rows.length > 0;
   }
 }

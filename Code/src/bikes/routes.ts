@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { AppModule } from "../context";
 import { parseOrThrow } from "../shared/validation";
 import { z } from "zod";
-import { PostgresBikeRepository, SqliteBikeRepository } from "./repository";
+import { PostgresBikeRepository } from "./repository";
 import { BikeService } from "./service";
 
 /** Registers the bike endpoints with an injectable service. */
@@ -25,9 +25,12 @@ export function registerBikeRoutes(
 }
 
 export const bikesModule: AppModule = (app, ctx) => {
-  const repository =
-    ctx.db.kind === "sqlite"
-      ? new SqliteBikeRepository(ctx.db.sqlite)
-      : new PostgresBikeRepository(ctx.db.sql);
-  registerBikeRoutes(app, new BikeService(repository, ctx.generateId, ctx.now));
+  registerBikeRoutes(
+    app,
+    new BikeService(
+      new PostgresBikeRepository(ctx.db),
+      ctx.generateId,
+      ctx.now,
+    ),
+  );
 };

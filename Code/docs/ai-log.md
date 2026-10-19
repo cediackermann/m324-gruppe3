@@ -1,5 +1,16 @@
 # AI-Log
 
+## 2026-10-19 - Single service with PostgreSQL only
+
+**Prompt:** Make the project simpler to host for continuous deployment: merge the bike and tour services into one service with different routes, and use PostgreSQL only.
+
+**AI observation:** Two services with two databases need two hosted web services, two databases, and an HTTP call between them, which free hosting tiers handle poorly (separate cold starts). `buildApp()` already accepted several modules, so the merge needed no new structure. With SQLite removed, the integration tests need a real PostgreSQL database.
+
+**Decision and changes:** One entry point (`src/server.ts`) registers both modules on port 3000. The tour module checks bikes through the bike repository instead of HTTP (`BIKE_SERVICE_URL` and the bike client were removed). All SQLite code, the driver switch, and the SQLite migration tests were removed; `src/shared/db.ts` holds the PostgreSQL client, the name-based migrations, and the ping. Compose and CI run one API and one database; the CI test job starts a PostgreSQL service container. Integration tests use `TEST_DATABASE_URL` only and refuse database names without `test`, because they delete all data.
+
+**Own validation:** 31 unit tests and 7 integration tests (real PostgreSQL 16 from Compose) passed, as did typecheck, lint, and formatting. The Docker image built, the container became healthy, and the smoke test passed against it.
+
+---
 ## 2026-09-28 - Bike and tour services and CI review
 
 **Prompt:** Implement issues #5-#12, the P2 endpoint tests, and the P3 CI requirements using the existing project structure.

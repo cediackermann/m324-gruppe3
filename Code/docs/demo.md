@@ -1,15 +1,14 @@
 # Docker API demo
 
-Run these commands from `Code/` in one terminal. Docker Desktop must be running. The commands use the two PostgreSQL-backed services from `docker-compose.yml`; no local Bun server is needed.
+Run these commands from `Code/` in one terminal. Docker Desktop must be running. The commands use the API and PostgreSQL containers from `docker-compose.yml`; no local Bun server is needed.
 
 ```bash
 docker compose up -d --build
 docker compose ps
 curl -sS -i http://localhost:3000/health
-curl -sS -i http://localhost:3001/health
 ```
 
-Both health requests should return `200 OK`. The bike API uses port 3000 and the tour API uses port 3001. Keep the same terminal for the variables below.
+The health request should return `200 OK`. The API serves bikes and tours on port 3000. Keep the same terminal for the variables below.
 
 ## User story 1: Create a bike
 
@@ -22,7 +21,7 @@ curl -sS -i -X POST http://localhost:3000/bikes \
   -d "{\"type\":\"Ghost XY1\",\"frameNumber\":\"${FRAME_NUMBER}\",\"wheelHeight\":15}"
 ```
 
-Expected: `201 Created`. The response contains the entered fields plus a generated `id` and `createdAt`. The bike is stored in the bike database.
+Expected: `201 Created`. The response contains the entered fields plus a generated `id` and `createdAt`. The bike is stored in the database.
 
 Check the duplicate and invalid-input cases:
 
@@ -58,14 +57,14 @@ If `jq` is not available, copy `id` from the successful bike response and set `B
 
 ## User story 3: Create a tour
 
-The selected bike is checked through the bike API before the tour is stored in the separate tour database:
+The selected bike is checked in the database before the tour is stored:
 
 ```bash
-curl -sS -i -X POST http://localhost:3001/tours \
+curl -sS -i -X POST http://localhost:3000/tours \
   -H 'Content-Type: application/json' \
   -d "{\"startLocation\":\"Bahnhofplatz, Niederhasli\",\"arrivalLocation\":\"Dorfstrasse, Oberhasli\",\"startsAt\":\"2030-05-01T09:00:00Z\",\"endsAt\":\"2030-05-01T11:00:00Z\",\"companion\":\"Sam Meyer\",\"bikeId\":\"${BIKE_ID}\"}"
 
-curl -sS -i http://localhost:3001/tours
+curl -sS -i http://localhost:3000/tours
 ```
 
 Expected: `201 Created` for the tour, then `200 OK` with the saved tour in the `tours` array.
@@ -73,26 +72,26 @@ Expected: `201 Created` for the tour, then `200 OK` with the saved tour in the `
 Check place, time, and bike validation:
 
 ```bash
-curl -sS -i -X POST http://localhost:3001/tours \
+curl -sS -i -X POST http://localhost:3000/tours \
   -H 'Content-Type: application/json' \
   -d "{\"startLocation\":\"Same place\",\"arrivalLocation\":\"Same place\",\"startsAt\":\"2030-05-01T11:00:00Z\",\"endsAt\":\"2030-05-01T09:00:00Z\",\"companion\":\"Sam Meyer\",\"bikeId\":\"${BIKE_ID}\"}"
 
-curl -sS -i -X POST http://localhost:3001/tours \
+curl -sS -i -X POST http://localhost:3000/tours \
   -H 'Content-Type: application/json' \
   -d '{"startLocation":"Station","arrivalLocation":"Village","startsAt":"2030-05-01T09:00:00Z","endsAt":"2030-05-01T11:00:00Z","companion":"Sam Meyer","bikeId":"missing-bike"}'
 ```
 
-Both requests should return `400 Bad Request`, with details for the invalid fields. To demonstrate dependency failure as well, temporarily stop only the bike API, repeat the valid tour request above, and then restart it:
+Both requests should return `400 Bad Request`, with details for the invalid fields. To demonstrate dependency failure as well, temporarily stop only the database, repeat the valid tour request above, and then restart it:
 
 ```bash
-docker compose stop bikes
-curl -sS -i -X POST http://localhost:3001/tours \
+docker compose stop db
+curl -sS -i -X POST http://localhost:3000/tours \
   -H 'Content-Type: application/json' \
   -d "{\"startLocation\":\"Station\",\"arrivalLocation\":\"Village\",\"startsAt\":\"2030-05-01T09:00:00Z\",\"endsAt\":\"2030-05-01T11:00:00Z\",\"companion\":\"Sam Meyer\",\"bikeId\":\"${BIKE_ID}\"}"
-docker compose start bikes
+docker compose start db
 ```
 
-The tour request should return `503 Service Unavailable` while the bike API is stopped.
+The tour request should return `503 Service Unavailable` while the database is stopped.
 
 Stop the demo containers without deleting their data:
 

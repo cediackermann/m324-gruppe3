@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { AppError } from "../shared/errors";
 import { parseOrThrow } from "../shared/validation";
-import type { BikeLookup } from "./bike-client";
 import type { Tour } from "./model";
 import type { TourRepository } from "./repository";
+
+/** Answers whether a bike with this id exists. */
+export type BikeLookup = (bikeId: string) => Promise<boolean>;
 
 const tourInput = z
   .strictObject({
@@ -43,7 +45,13 @@ export class TourService {
 
   async create(input: unknown): Promise<Tour> {
     const values = parseOrThrow(tourInput, input, "Invalid tour details.");
-    if (!(await this.bikeExists(values.bikeId))) {
+    let bikeExists: boolean;
+    try {
+      bikeExists = await this.bikeExists(values.bikeId);
+    } catch {
+      throw AppError.unavailable("The bike could not be checked.");
+    }
+    if (!bikeExists) {
       throw AppError.validation("Invalid tour details.", [
         { field: "bikeId", message: "The selected bike does not exist." },
       ]);

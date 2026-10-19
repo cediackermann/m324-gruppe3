@@ -15,13 +15,14 @@ const sampleBike: Bike = {
   createdAt: "2026-01-15T10:00:00.000Z",
 };
 
-function buildBikeApp(repository: BikeRepository) {
+/** Bike routes never call `exists`; tours use it, so the fakes may omit it. */
+function buildBikeApp(repository: Omit<BikeRepository, "exists">) {
   const app = Fastify();
   registerErrorHandling(app);
   registerBikeRoutes(
     app,
     new BikeService(
-      repository,
+      { exists: async () => false, ...repository },
       () => "bike-1",
       () => new Date(sampleBike.createdAt),
     ),

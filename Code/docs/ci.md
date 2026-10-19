@@ -4,16 +4,17 @@ The active workflow is [`.github/workflows/ci.yml`](../../.github/workflows/ci.y
 
 ## Test stages and build result
 
-The `test` job installs the locked dependencies with Bun 1.3.13, then checks formatting, lint, types, isolated endpoint unit tests, and the HTTP integration test. The integration test starts two Fastify servers with different in-memory SQLite databases, so it needs no external service. The `docker-build` job runs only after these checks pass. It builds `biketouren:<commit SHA>`, starts two API containers and two PostgreSQL containers, waits for both health endpoints, and runs a system smoke test that creates and lists a bike and a tour. The image tag is the exact build result that a later P3b publish step can push to a registry; P3 does not publish it.
+The `test` job installs the locked dependencies with Bun 1.3.13, then checks formatting, lint, types, isolated endpoint unit tests, and the integration tests. The integration tests run against a PostgreSQL 16 service container (`app_test` database) started by the job. The `docker-build` job runs only after these checks pass. It builds `biketouren:<commit SHA>`, starts the API container and one PostgreSQL container, waits for the health endpoint, and runs a system smoke test that creates and lists a bike and a tour. The image tag is the exact build result that a later P3b publish step can push to a registry; P3 does not publish it.
 
-`bun test tests/unit` covers route validation, successful results, empty lists, conflicts, and dependency failures with fake repositories and bike lookups. `bun test tests/integration` checks a real HTTP request from the tour service to the bike service and verifies that the tour database has no bike table. `bun tests/system/smoke.ts` checks the running Compose stack, including PostgreSQL startup, creation, listing, duplicate frames, and unknown bikes.
+`bun test tests/unit` covers route validation, successful results, empty lists, conflicts, and dependency failures with fake repositories, bike lookups, and a fake SQL client. `bun test tests/integration` runs the migrations and the full app against real PostgreSQL, including the unique frame-number constraint and the bike check for tours. `bun tests/system/smoke.ts` checks the running Compose stack, including PostgreSQL startup, creation, listing, duplicate frames, and unknown bikes.
 
 ## Variants evaluated
 
 | Variant | Jobs and checks | Result and decision |
 | --- | --- | --- |
 | Original workflow in repository history | One fast test job, then Docker build and `/health` | Its recorded local run passed 25 tests and one healthy Docker API (see `docs/ai-log.md`, 2026-09-21 CI entry). It could not detect a broken bike-to-tour request. |
-| Current workflow | Fast checks and HTTP integration in one job, then Docker build and a real API workflow in the second job | Selected. Fast failures stop before the Docker build; the system test exercises the built image and the cross-service contract. |
+| Two-service workflow (commit `2100160`) | Fast checks and HTTP integration in one job, then Docker build and a real API workflow in the second job | Passed in run #2. Replaced when the services were merged into one. |
+| Current workflow | Same two jobs; the test job starts a PostgreSQL service container for the integration tests, and the Docker job runs one API and one database | Selected. The app now uses PostgreSQL only, so the integration tests must use a real database; the system test exercises the built image. |
 
 The test stages stay in one fast job because they share the same dependency install and run quickly. Docker runs in a later job because its setup is slower and it needs PostgreSQL. Repeated pushes to the same branch cancel older runs. The workflow uses a frozen lockfile and a pinned Bun version for reproducibility. Docker image caching is left to the runner; it can be evaluated after run times are available.
 

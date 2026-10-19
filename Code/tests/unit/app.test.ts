@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildApp, type AppModule } from "../../src/app";
-import { MIGRATIONS } from "../../src/shared/migrations";
+import { fakeSql } from "../helpers/fake-sql";
 
 /**
  * Integration-level tests for `buildApp`: does it wire the pieces together
@@ -13,10 +13,10 @@ describe("buildApp", () => {
    * Happy path: the app boots without any feature module and answers the
    * readiness probe, proving `registerHealthRoute` is wired up.
    *
-   * @expected status 200, a reachable database and the current schema version
+   * @expected status 200 and a reachable database
    */
   test("serves /health with a working database and no module registered", async () => {
-    const app = buildApp();
+    const app = buildApp({ db: fakeSql(() => [{ result: 1 }]) });
 
     const response = await app.inject({ method: "GET", url: "/health" });
 
@@ -24,7 +24,6 @@ describe("buildApp", () => {
     expect(response.json<Record<string, unknown>>()).toEqual({
       status: "ok",
       database: "ok",
-      schemaVersion: MIGRATIONS.length,
     });
     await app.close();
   });
@@ -43,6 +42,7 @@ describe("buildApp", () => {
       }));
     };
     const app = buildApp({
+      db: fakeSql(),
       modules: [module],
       generateId: () => "fixed-id",
       now: () => new Date("2026-01-15T10:00:00.000Z"),
@@ -69,7 +69,7 @@ describe("buildApp", () => {
         throw new Error("boom");
       });
     };
-    const app = buildApp({ modules: [module] });
+    const app = buildApp({ db: fakeSql(), modules: [module] });
 
     const response = await app.inject({ method: "GET", url: "/crash" });
 

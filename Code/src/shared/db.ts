@@ -1,93 +1,65 @@
-import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { SQL } from "bun";
 import { MIGRATIONS, type Migration } from "./migrations";
 
 /**
- * The database handle used across the app. It is `bun:sqlite`'s `Database`,
- * but modules should only depend on this alias, so swapping the driver later
- * touches one line.
+ * The database handle used across the app: Bun's built-in Postgres client
+ * (`Bun.sql`). Modules should only depend on this alias, so swapping the
+ * driver later touches one line.
  */
-export type Db = Database;
+export type Db = SQL;
 
 /**
- * Opens a database, applies the connection settings and runs all pending
- * migrations.
+ * Opens a Postgres connection. `Bun.sql` connects lazily on the first query,
+ * so this does not touch the network yet.
  *
- * @param path file path of the database, or `":memory:"` for a throwaway
- *   database (used by every test, so tests never share state)
- * @returns the ready-to-use, migrated database handle
+ * @param connectionString a `postgres://` URL, e.g. from Docker Compose or
+ *   Neon (`?sslmode=require` for hosted databases)
+ * @returns the client, usable as a tagged template: `` sql`...` ``
  */
-export function createDatabase(
-  path: string,
-  migrations: Migration[] = MIGRATIONS,
-): Db {
-  // SQLite does not create the parent directory of the file itself, so a
-  // fresh checkout with no `data/` folder yet would fail right here.
-  if (path !== ":memory:") {
-    const dir = dirname(path);
-    if (dir && dir !== ".") {
-      mkdirSync(dir, { recursive: true });
-    }
-  }
-
-  const db = new Database(path, { create: true });
-
-  // WAL keeps readers from blocking the writer; both pragmas have to be set
-  // per connection, not once per file.
-  db.exec("PRAGMA journal_mode = WAL");
-  db.exec("PRAGMA foreign_keys = ON");
-
-  migrate(db, migrations);
-  return db;
+export function createDatabase(connectionString: string): Db {
+  return new SQL(connectionString);
 }
 
 /**
- * Applies every migration that has not run yet on this database.
+ * Applies every migration that has not run yet.
  *
- * The number of applied migrations is stored in SQLite's `user_version`,
- * so calling this again on the same database is a no-op and a new release
- * only runs the migrations that were added since the last one. Existing rows
- * are never touched. Each migration runs inside a transaction together with
- * the version bump: if the SQL fails, the version is not advanced.
+ * Applied migrations are recorded by name in `schema_migrations`, so calling
+ * this again is a no-op and a new release only runs the migrations that were
+ * added since the last one. All pending migrations run in one transaction
+ * together with their records: if one fails, none of them is recorded.
  *
- * @param db the database to migrate
+ * @param sql the database to migrate
  * @param migrations the migrations to apply; only overridden in tests
  * @returns the names of the migrations applied by this call
  */
-export function migrate(
-  db: Db,
+export async function migrate(
+  sql: Db,
   migrations: Migration[] = MIGRATIONS,
-): string[] {
-  const current = currentVersion(db);
+): Promise<string[]> {
+  await sql`CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY)`;
   const applied: string[] = [];
-
-  for (let index = current; index < migrations.length; index++) {
-    const migration = migrations[index]!;
-    const version = index + 1;
-
-    db.transaction(() => {
-      db.exec(migration.sql);
-      // `user_version` cannot be set through a bound parameter; `version` is
-      // a loop counter over our own migration list, never client input.
-      db.exec(`PRAGMA user_version = ${version}`);
-    })();
-
-    applied.push(migration.name);
-  }
-
+  await sql.begin(async (tx) => {
+    const rows = await tx`SELECT name FROM schema_migrations`;
+    const done = new Set(rows.map((row: { name: string }) => row.name));
+    for (const migration of migrations) {
+      if (!done.has(migration.name)) {
+        await tx.unsafe(migration.sql);
+        await tx`INSERT INTO schema_migrations (name) VALUES (${migration.name})`;
+        applied.push(migration.name);
+      }
+    }
+  });
   return applied;
 }
 
 /**
- * Reads how many migrations have been applied to this database.
+ * Checks whether the connection actually answers a query, for the readiness
+ * probe.
  *
- * @param db the database to inspect
- * @returns the current schema version (0 for a fresh database)
+ * @param sql the database to check
+ * @returns true if the database answered as expected
  */
-export function currentVersion(db: Db): number {
-  const row = db
-    .query<{ user_version: number }, []>("PRAGMA user_version")
-    .get();
-  return row?.user_version ?? 0;
+export async function ping(sql: Db): Promise<boolean> {
+  const rows = await sql`SELECT 1 AS result`;
+  return rows[0]?.result === 1;
 }

@@ -2,8 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { AppModule } from "../context";
 import { parseOrThrow } from "../shared/validation";
-import { createBikeLookup } from "./bike-client";
-import { PostgresTourRepository, SqliteTourRepository } from "./repository";
+import { PostgresBikeRepository } from "../bikes/repository";
+import { PostgresTourRepository } from "./repository";
 import { TourService } from "./service";
 
 /** Registers the tour endpoints with an injectable service. */
@@ -25,20 +25,19 @@ export function registerTourRoutes(
   });
 }
 
-export function createToursModule(bikeServiceUrl: string): AppModule {
-  return (app, ctx) => {
-    const repository =
-      ctx.db.kind === "sqlite"
-        ? new SqliteTourRepository(ctx.db.sqlite)
-        : new PostgresTourRepository(ctx.db.sql);
-    registerTourRoutes(
-      app,
-      new TourService(
-        repository,
-        createBikeLookup(bikeServiceUrl),
-        ctx.generateId,
-        ctx.now,
-      ),
-    );
-  };
-}
+/**
+ * Registers the tour endpoints. Bikes live in the same database, so a tour's
+ * bike is checked directly through the bike repository.
+ */
+export const toursModule: AppModule = (app, ctx) => {
+  const bikes = new PostgresBikeRepository(ctx.db);
+  registerTourRoutes(
+    app,
+    new TourService(
+      new PostgresTourRepository(ctx.db),
+      (bikeId) => bikes.exists(bikeId),
+      ctx.generateId,
+      ctx.now,
+    ),
+  );
+};

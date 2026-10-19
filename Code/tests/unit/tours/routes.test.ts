@@ -1,12 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import Fastify from "fastify";
-import type { BikeLookup } from "../../../src/tours/bike-client";
 import type { Tour } from "../../../src/tours/model";
 import type { TourRepository } from "../../../src/tours/repository";
 import { registerTourRoutes } from "../../../src/tours/routes";
-import { TourService } from "../../../src/tours/service";
+import { TourService, type BikeLookup } from "../../../src/tours/service";
 import { registerErrorHandling } from "../../../src/error-handling";
-import { AppError } from "../../../src/shared/errors";
 
 const input = {
   startLocation: "Bahnhofplatz, Niederhasli",
@@ -122,7 +120,7 @@ describe("POST /tours", () => {
     await app.close();
   });
 
-  /** Rejects a bike that the bike service does not know. */
+  /** Rejects a bike that does not exist. */
   test("returns 400 for an unknown bike", async () => {
     const app = buildTourApp(emptyRepository(), async () => false);
     const response = await app.inject({
@@ -139,8 +137,8 @@ describe("POST /tours", () => {
     await app.close();
   });
 
-  /** Reports an unreachable bike service without creating a tour. */
-  test("returns 503 when the bike service is unavailable", async () => {
+  /** Reports a failed bike check as unavailable without creating a tour. */
+  test("returns 503 when the bike cannot be checked", async () => {
     let saved = false;
     const app = buildTourApp(
       {
@@ -150,7 +148,7 @@ describe("POST /tours", () => {
         list: async () => [],
       },
       async () => {
-        throw AppError.unavailable("The bike service is unavailable.");
+        throw new Error("connection refused");
       },
     );
     const response = await app.inject({

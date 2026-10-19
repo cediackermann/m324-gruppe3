@@ -1,66 +1,29 @@
 services:
-  bikes:
+  app:
     build: .
     image: biketouren:${APP_VERSION:-dev}
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://app:app@bikes-db:5432/app
+      DATABASE_URL: postgres://app:app@db:5432/app
     depends_on:
-      bikes-db:
+      db:
         condition: service_healthy
     restart: unless-stopped
 
-  tours:
-    image: biketouren:${APP_VERSION:-dev}
-    command: ["bun", "src/tours/server.ts"]
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    # Published so `bun run dev` and the integration tests on the host can
+    # reach it.
     ports:
-      - "3001:3001"
-    environment:
-      PORT: 3001
-      DATABASE_URL: postgres://app:app@tours-db:5432/app
-      BIKE_SERVICE_URL: http://bikes:3000
-    depends_on:
-      tours-db:
-        condition: service_healthy
-      bikes:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "const r = await fetch('http://127.0.0.1:3001/health'); process.exit(r.ok ? 0 : 1)",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  bikes-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: app
+      - "5432:5432"
     volumes:
-      - bikes-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d app"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    restart: unless-stopped
-
-  tours-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: app
-    volumes:
-      - tours-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
+      - ./docker/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
       interval: 5s
@@ -69,5 +32,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  bikes-data:
-  tours-data:
+  db-data:
