@@ -1,5 +1,17 @@
 # AI-Log
 
+## 2026-10-19 - Continuous deployment to Render and Neon
+
+**Prompt:** Set up continuous deployment for free with Neon (database) and Render (API).
+
+**AI observation:** Render's free web service can build the existing Dockerfile, and its deploy hook accepts `ref=<commit SHA>`, so CI can deploy exactly the tested commit and also redeploy an older one as a rollback. A deploy hook returns as soon as Render accepts the request, so it does not show whether the new version is actually running.
+
+**Decision and changes:** A `deploy` job runs after `test` and `docker-build`, only on pushes to `main`. It remembers the live version, calls the deploy hook with the commit SHA, waits until `/health` reports that SHA, runs read-only production checks, and on failure redeploys the previous SHA. `/health` now includes `version` (from `RENDER_GIT_COMMIT` or `APP_VERSION`); the Docker CI job checks it as well. `render.yaml` defines the service with Render auto-deploy off, so only CI deploys. Runs on `main` are no longer cancelled by newer pushes, so a deploy can finish its rollback. Setup steps are in `docs/cd.md`.
+
+**Own validation:** 32 unit tests and 7 integration tests passed, as did typecheck, lint, and formatting. Against the Compose stack, `/health` reported the configured version, the wait script succeeded for it and timed out (exit 1) for a wrong SHA, and the smoke test passed. Both YAML files parse. The deploy job itself can only run after the Neon and Render accounts and the GitHub secret and variable exist; its first real run is still pending.
+
+---
+
 ## 2026-10-19 - Single service with PostgreSQL only
 
 **Prompt:** Make the project simpler to host for continuous deployment: merge the bike and tour services into one service with different routes, and use PostgreSQL only.
@@ -11,6 +23,7 @@
 **Own validation:** 31 unit tests and 7 integration tests (real PostgreSQL 16 from Compose) passed, as did typecheck, lint, and formatting. The Docker image built, the container became healthy, and the smoke test passed against it.
 
 ---
+
 ## 2026-09-28 - Bike and tour services and CI review
 
 **Prompt:** Implement issues #5-#12, the P2 endpoint tests, and the P3 CI requirements using the existing project structure.
@@ -252,6 +265,7 @@ Datenbankdatei nicht selbst an.
 existierende Zielstruktur und prüft, dass die Datei danach existiert.
 
 **Testergebnis (selbst ausgeführt):**
+
 - `bun test` → 16 pass / 0 fail, 35 expect() calls.
 - `bunx tsc --noEmit` → keine Fehler.
 - Lokal auf frischem `data/`-Stand: `rm -rf data && bun install && bun run
@@ -273,6 +287,7 @@ aufteilen."
 **Vorgehen:** `app.ts` bündelte bisher vier verschiedene Zuständigkeiten
 (Context-/Modul-Typen, Fehlerbehandlung, Health-Route, Bootstrapping) in
 einer Datei. Aufgeteilt in:
+
 - `src/context.ts` — `AppContext`, `AppModule`
 - `src/error-handling.ts` — `registerErrorHandling(app)`
 - `src/health.ts` — `registerHealthRoute(app, ctx)`
@@ -297,6 +312,7 @@ um die Abfrage in `health.ts`, beide Fälle (Exception und leeres Resultat)
 laufen jetzt auf denselben `AppError.unavailable(...)`.
 
 **Testergebnis (selbst ausgeführt):**
+
 - `bun test` → 19 pass / 0 fail, 41 expect() calls (vorher 16 pass).
 - `bunx tsc --noEmit` → keine Fehler.
 - Server-Check nach dem Split: `bun run dev` → `GET /health` = `{"status":
@@ -323,6 +339,7 @@ nur, dass `health.ts` als einziger Endpoint flach in `src/` lag statt in
 einem eigenen Verzeichnis wie die geplanten `bikes/`/`tours/`-Module.
 
 **Durchgeführt:**
+
 - `src/health.ts` → `src/health/routes.ts` verschoben (Test entsprechend
   nach `tests/unit/health/routes.test.ts`), Importpfade angepasst.
 - `AppModule`-Doku in `context.ts` um die Konvention ergänzt: jeder Endpoint
@@ -333,6 +350,7 @@ einem eigenen Verzeichnis wie die geplanten `bikes/`/`tours/`-Module.
   `bikes/`, `tours/`.
 
 **Testergebnis (selbst ausgeführt):**
+
 - `bun test` → 19 pass / 0 fail, 41 expect() calls (unverändert, nur
   verschoben).
 - `bunx tsc --noEmit` → keine Fehler.
@@ -357,6 +375,7 @@ zwischen Aufrufen/Deployments geleert). Die bestehende Architektur
 existiert auf Vercel schlicht nicht.
 
 **Eigene Entscheidungen:**
+
 - **Nicht** die bestehende, bereits getestete SQLite-Plattform ersetzen
   (Checkpoint 1 verlangt laut Auftrag explizit noch kein Deployment) —
   stattdessen Postgres **zusätzlich** über eine treiberunabhängige
@@ -379,6 +398,7 @@ existiert auf Vercel schlicht nicht.
   Repository-Interface-Muster.
 
 **Nötige Korrekturen:**
+
 - `tests/unit/health/routes.test.ts` baute `AppContext.db` bisher direkt aus
   dem rohen `bun:sqlite`-Handle → musste auf `{ kind: "sqlite", sqlite: db }`
   umgestellt werden; neue Tests für den Postgres-Zweig mit einem minimalen
@@ -386,6 +406,7 @@ existiert auf Vercel schlicht nicht.
   im Unit-Test).
 
 **Testergebnis (selbst ausgeführt):**
+
 - `bun test` → 21 pass / 0 fail, 45 expect() calls.
 - `bunx tsc --noEmit` → keine Fehler.
 - SQLite-Pfad (`bun run dev`, kein `DATABASE_URL`): `GET /health` =
@@ -415,6 +436,7 @@ trennen."
 
 **Durchgeführt:** `docker-compose.yml` von einem `app`-Service (SQLite-Datei
 auf Volume) auf zwei Services umgestellt:
+
 - `app` — zustandslos, `DATABASE_URL` zeigt auf `db`.
 - `db` — `postgres:16-alpine`, eigenes Volume `db-data`, `HEALTHCHECK` via
   `pg_isready`; `app` wartet über `depends_on: condition: service_healthy`
@@ -444,6 +466,7 @@ eine simple IP-Verbindung fehl) — daher zusätzlich auf das Debian-basierte
 festgehalten, damit sie bei einem Bun-Upgrade erneut geprüft werden.
 
 **Testergebnis (selbst ausgeführt, nicht nur behauptet):**
+
 - `bun test` → 21 pass / 0 fail, 45 expect() calls (unverändert).
 - `bunx tsc --noEmit` → keine Fehler.
 - `docker compose up -d --build`: `db` wird zuerst gesund, `app` startet
@@ -478,6 +501,7 @@ mit einer Verbindungs-URL getestet (kein echter Verbindungsaufbau nötig,
 `Bun.sql` verbindet erst bei der ersten Query).
 
 **Testergebnis (selbst ausgeführt):**
+
 - `bun test` → 25 pass / 0 fail, 49 expect() calls (vorher 21 pass).
 - `bunx tsc --noEmit` → keine Fehler.
 
@@ -499,6 +523,7 @@ Ausführen. Zusätzlich fehlten `@eslint/js` und `typescript-eslint` als
 direkte Abhängigkeiten (nur transitiv vorhanden).
 
 **Durchgeführt:**
+
 - `typescript-eslint` + `@eslint/js` installiert, `eslint.config.mjs`
   (flat config, TS-aware) ergänzt. `.ts`-Endung für die Config selbst
   scheiterte an ESLint 10s Anforderung nach `jiti` für TS-Configs → auf
@@ -521,6 +546,7 @@ direkte Abhängigkeiten (nur transitiv vorhanden).
   andere Bun-Version könnte sich dort wieder anders verhalten.
 
 **Nötige Korrekturen:**
+
 - Der Healthcheck-Wartepolling-Schritt im Workflow verwendete zunächst eine
   Variable namens `status` → beim lokalen Testen unter zsh schlug das mit
   `read-only variable: status` fehl (zsh reserviert `$status`). GitHub
@@ -529,6 +555,7 @@ direkte Abhängigkeiten (nur transitiv vorhanden).
 
 **Testergebnis (selbst ausgeführt, jeder Workflow-Schritt einzeln lokal
 nachvollzogen, nicht nur der Workflow-Text geschrieben):**
+
 - `bun install --frozen-lockfile`, `bun run format:check`, `bun run lint`,
   `bun run typecheck`, `bun test` → alle grün (25 pass / 0 fail, 49
   expect() calls).

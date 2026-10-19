@@ -21,6 +21,11 @@ export interface AppOptions {
   now?: () => Date;
   /** Enables request logging. Off by default so tests stay quiet. */
   logger?: boolean;
+  /**
+   * The deployed version (commit SHA), reported by `/health` so the
+   * deployment pipeline can tell when a new release is live.
+   */
+  version?: string;
 }
 
 /**
@@ -44,7 +49,7 @@ export function buildApp(options: AppOptions): FastifyInstance {
   };
 
   registerErrorHandling(app);
-  registerHealthRoute(app, context);
+  registerHealthRoute(app, context, options.version);
 
   for (const module of options.modules ?? []) {
     module(app, context);
