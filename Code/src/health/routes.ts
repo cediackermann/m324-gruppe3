@@ -11,16 +11,20 @@ import { ping } from "../shared/db";
  *
  * @param app the Fastify instance to register the route on
  * @param ctx the shared app context (its database is queried directly)
+ * @param version the running commit SHA; included in the response when set
  */
 export function registerHealthRoute(
   app: FastifyInstance,
   ctx: AppContext,
+  version?: string,
 ): void {
   app.get("/health", async () => {
     const ok = await ping(ctx.db).catch(() => false);
     if (!ok) {
       throw AppError.unavailable("The database did not answer as expected.");
     }
-    return { status: "ok", database: "ok" };
+    return version
+      ? { status: "ok", database: "ok", version }
+      : { status: "ok", database: "ok" };
   });
 }

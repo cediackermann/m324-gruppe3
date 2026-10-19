@@ -14,7 +14,13 @@ if (!databaseUrl) {
 const db = createDatabase(databaseUrl);
 await migrate(db);
 
-const app = buildApp({ db, logger: true, modules: [bikesModule, toursModule] });
+const app = buildApp({
+  db,
+  logger: true,
+  modules: [bikesModule, toursModule],
+  // Render sets RENDER_GIT_COMMIT; Docker Compose passes APP_VERSION.
+  version: process.env.RENDER_GIT_COMMIT ?? process.env.APP_VERSION,
+});
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
     app.close().then(async () => {

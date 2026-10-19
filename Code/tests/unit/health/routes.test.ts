@@ -9,10 +9,10 @@ import { fakeSql } from "../../helpers/fake-sql";
  * Builds a minimal Fastify app with only the health route and the shared
  * error handling, so these tests exercise `/health` in isolation.
  */
-function buildHealthOnlyApp(ctx: AppContext) {
+function buildHealthOnlyApp(ctx: AppContext, version?: string) {
   const app = Fastify({ logger: false });
   registerErrorHandling(app);
-  registerHealthRoute(app, ctx);
+  registerHealthRoute(app, ctx, version);
   return app;
 }
 
@@ -35,6 +35,33 @@ describe("registerHealthRoute", () => {
     expect(response.json<Record<string, unknown>>()).toEqual({
       status: "ok",
       database: "ok",
+    });
+    await app.close();
+  });
+
+  /**
+   * Happy path: when a version is configured, the probe reports it, so the
+   * deployment pipeline can wait until the new commit is live.
+   *
+   * @expected status 200 and the configured version in the body
+   */
+  test("reports the running version when one is set", async () => {
+    const app = buildHealthOnlyApp(
+      {
+        db: fakeSql(() => [{ result: 1 }]),
+        generateId: () => "id",
+        now: () => new Date(),
+      },
+      "abc123",
+    );
+
+    const response = await app.inject({ method: "GET", url: "/health" });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<Record<string, unknown>>()).toEqual({
+      status: "ok",
+      database: "ok",
+      version: "abc123",
     });
     await app.close();
   });

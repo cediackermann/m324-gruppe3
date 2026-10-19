@@ -6,6 +6,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgres://app:app@db:5432/app
+      APP_VERSION: ${APP_VERSION:-dev}
     depends_on:
       db:
         condition: service_healthy

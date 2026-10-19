@@ -62,6 +62,10 @@ Unit tests use fake repositories, a fake bike lookup, and a fake SQL client; the
 
 The active CI workflow is at the repository root, `.github/workflows/ci.yml`. Its build produces a Docker image tagged with the commit SHA for later artifact publishing. The job structure and test stages are described in [`docs/ci.md`](docs/ci.md).
 
+## Deployment
+
+Every push to `main` that passes CI is deployed automatically to Render (API) and Neon (PostgreSQL), both on free tiers. The deploy job checks that the new commit is live and rolls back to the previous one if it is not. `GET /health` reports the running commit in `version`. Setup, rollback, secrets, and monitoring are described in [`docs/cd.md`](docs/cd.md).
+
 ## Project layout
 
-`src/bikes/` and `src/tours/` each contain routes, service, repository, model, and migrations. The single entry point is `src/server.ts`. Shared application wiring, validation, errors, and database helpers live under `src/` and `src/shared/`; `src/shared/migrations.ts` lists every module's migrations in order. The endpoint unit tests mirror their modules under `tests/unit/`; shared test helpers live in `tests/helpers/`.
+`src/bikes/` and `src/tours/` each contain routes, service, repository, model, and migrations. The single entry point is `src/server.ts`. `scripts/` holds the deployment helper, and `render.yaml` at the repository root describes the Render service. Shared application wiring, validation, errors, and database helpers live under `src/` and `src/shared/`; `src/shared/migrations.ts` lists every module's migrations in order. The endpoint unit tests mirror their modules under `tests/unit/`; shared test helpers live in `tests/helpers/`.

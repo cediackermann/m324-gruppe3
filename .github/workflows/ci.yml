@@ -12,7 +12,9 @@ on:
 # queue up stale runs while you push fixes.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Except on main: a production deploy is never cancelled halfway, so it
+  # can always finish its check and, if needed, its rollback.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # The Bun project lives in Code/, one level below this monorepo's root
 # (which also holds Theorie/, Dokumentation/, ...) — every run: step below
@@ -81,9 +83,11 @@ jobs:
         run: docker compose up -d --no-build
 
       - name: Wait for the API
+        env:
+          APP_VERSION: ${{ github.sha }}
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS localhost:3000/health; then
+            if curl -fsS localhost:3000/health | jq -e --arg v "$APP_VERSION" '.version == $v'; then
               exit 0
             fi
             sleep 2
@@ -102,3 +106,65 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down -v
+
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: [test, docker-build]
+    # Continuous deployment: every push to main that passes all checks goes
+    # live. Pull requests and other branches never deploy.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    env:
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+      DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deployment settings
+        run: |
+          if [ -z "$PRODUCTION_URL" ] || [ -z "$DEPLOY_HOOK" ]; then
+            echo "::error::Set the PRODUCTION_URL variable and the RENDER_DEPLOY_HOOK_URL secret (see Code/docs/cd.md)."
+            exit 1
+          fi
+
+      # The version that is live now is the rollback target if this deploy
+      # fails. Empty on the very first deploy.
+      - name: Remember the live version
+        id: previous
+        run: |
+          version=$(curl -fsS --max-time 90 "$PRODUCTION_URL/health" | jq -r '.version // empty' || true)
+          echo "Live version before deploy: ${version:-none}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # `ref` makes Render build exactly the commit that passed CI, not
+      # whatever is newest on main.
+      - name: Deploy this commit to Render
+        run: curl -fsS -X POST "$DEPLOY_HOOK&ref=$GITHUB_SHA"
+
+      - name: Wait until the new version is live
+        run: scripts/wait-for-version.sh "$PRODUCTION_URL" "$GITHUB_SHA"
+
+      # Read-only on purpose: the full write workflow already ran against the
+      # built image in docker-build, and production data stays clean.
+      - name: Check production
+        run: |
+          curl -fsS "$PRODUCTION_URL/health" | jq -e '.status == "ok" and .database == "ok"'
+          curl -fsS "$PRODUCTION_URL/bikes" | jq -e '.bikes | type == "array"'
+          curl -fsS "$PRODUCTION_URL/tours" | jq -e '.tours | type == "array"'
+
+      - name: Roll back to the previous version
+        if: failure() && steps.previous.outputs.version != '' && steps.previous.outputs.version != github.sha
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.version }}
+        run: |
+          live=$(curl -fsS --max-time 90 "$PRODUCTION_URL/health" | jq -r '.version // empty' || true)
+          if [ "$live" = "$PREVIOUS" ]; then
+            echo "The previous version $PREVIOUS is still live (the new one never went live); nothing to roll back."
+            exit 0
+          fi
+          echo "Rolling back from ${live:-unreachable} to $PREVIOUS."
+          curl -fsS -X POST "$DEPLOY_HOOK&ref=$PREVIOUS"
+          scripts/wait-for-version.sh "$PRODUCTION_URL" "$PREVIOUS"
