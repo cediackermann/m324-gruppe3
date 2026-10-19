@@ -142,7 +142,7 @@ jobs:
       # `ref` makes Render build exactly the commit that passed CI, not
       # whatever is newest on main.
       - name: Deploy this commit to Render
-        run: curl -fsS -X POST "$DEPLOY_HOOK&ref=$GITHUB_SHA"
+        run: scripts/render-deploy.sh "$GITHUB_SHA"
 
       - name: Wait until the new version is live
         run: scripts/wait-for-version.sh "$PRODUCTION_URL" "$GITHUB_SHA"
@@ -166,5 +166,5 @@ jobs:
             exit 0
           fi
           echo "Rolling back from ${live:-unreachable} to $PREVIOUS."
-          curl -fsS -X POST "$DEPLOY_HOOK&ref=$PREVIOUS"
+          scripts/render-deploy.sh "$PREVIOUS"
           scripts/wait-for-version.sh "$PRODUCTION_URL" "$PREVIOUS"
