@@ -49,6 +49,8 @@ docker compose ps
 
 Compose runs both APIs with separate PostgreSQL containers and volumes. The same application image runs each service with a different command. The bike API uses port 3000 and the tour API port 3001. `docker compose down` stops the stack and keeps data; `docker compose down -v` also deletes both database volumes.
 
+For a copyable Docker walkthrough of all three user stories, see [`docs/demo.md`](docs/demo.md).
+
 ## Checks
 
 ```bash
