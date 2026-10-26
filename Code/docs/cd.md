@@ -4,6 +4,8 @@ Every commit on `main` that passes all CI checks is deployed to production autom
 
 Live: <https://m324-gruppe3.onrender.com/health>
 
+Why this solution was chosen, the variants that were tried, and the evidence for each assessment criterion are in [`cd-decisions.md`](cd-decisions.md).
+
 ```mermaid
 flowchart TD
     A["Merge to main"] --> B["GitHub Actions: test (format, lint, types, unit and integration tests)"]
