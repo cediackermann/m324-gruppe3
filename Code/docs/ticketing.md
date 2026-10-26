@@ -17,15 +17,15 @@ The application lives in `Code/` (Bun, Fastify, PostgreSQL, Docker). Short-lived
    | `support:l1` | Currently handled by first-level support |
    | `support:l2` | Currently handled by second-level support |
 
-3. Name the responsible L1/L2 users and give them **Write** access. L1 watches repository issues and checks the unassigned L1 queue; the first supporter taking a ticket assigns themselves.
+3. **L1: Cédric (`cediackermann`); L2: Ramis (`MuhammadRamisYousaf`).** Both already have the required repository access. The form assigns new tickets to Cédric; he monitors the L1 queue and replies on the issue.
 4. After review and merge into `main`, share [the customer form](https://github.com/cediackermann/m324-gruppe3/issues/new?template=support.yml). Its definition is [`.github/ISSUE_TEMPLATE/support.yml`](../../.github/ISSUE_TEMPLATE/support.yml).
-5. The repository administrator (`cediackermann`) must protect `main` in **Settings → Branches**: require a PR, at least one other member's approval, and the existing **Static checks and tests** and **Docker build and system test** checks. These requirements are currently not enforced (see verification below). The authenticated account has Write access, without administration rights.
+5. Branch protection is optional for this demonstration: review and CI are shown through the existing PR process. To enforce that process technically, the administrator can protect `main` in **Settings → Branches**, requiring a PR, one approval, and the existing **Static checks and tests** and **Docker build and system test** checks.
 
 ## Support flow
 
-1. **Customer:** submit the problem, expected result, and impact; optionally add reproduction steps and environment/version. The open ticket receives `support` and `support:l1`.
-2. **L1:** check `is:issue is:open label:support label:support:l1`, assign yourself, and reply with an assessment, questions, or solution. Every ticket starts here, including suspected bugs.
-3. **Escalation:** comment findings, reproduction steps, attempted solutions, and escalation reason. On the **same issue**, replace `support:l1` with `support:l2`, retain `support`, and assign the agreed L2 supporter. L2 uses `is:issue is:open label:support label:support:l2`. The ticket ID, conversation, and history remain intact.
+1. **Customer:** submit the problem, expected result, and impact; optionally add reproduction steps and environment/version. The open ticket receives `support` and `support:l1` and is assigned to Cédric.
+2. **L1 (Cédric):** check `is:issue is:open label:support label:support:l1` and reply with an assessment, questions, or solution. Every ticket starts here, including suspected bugs.
+3. **Escalation:** comment findings, reproduction steps, attempted solutions, and escalation reason. On the **same issue**, replace `support:l1` with `support:l2`, retain `support`, and reassign from `cediackermann` to `MuhammadRamisYousaf` (Ramis). L2 uses `is:issue is:open label:support label:support:l2`. The ticket ID, conversation, and history remain intact.
 4. **L2:** investigate and add `bug` for confirmed defects. Use the development process below for fixes. To return to L1, comment the findings, replace the level label, and reassign the same ticket.
 5. **Resolution:** document the solution. For fixes, link the successful Render deployment and verify `/health`'s `version` against the deployed commit before closing as **Completed**. Close confirmed support solutions as Completed; duplicates/withdrawals as **Not planned**, with an explanation. Reopen persistent problems. Retain `support` and the final level label on closed tickets.
 
@@ -53,11 +53,11 @@ These records support volume, resolution time, first-response, and escalation an
 
 Locally validate YAML, required fields, and initial labels. After setup and merge, perform this acceptance check:
 
-1. Submit a clearly marked test ticket; verify L1 labels/queue, self-assignment, and a reply.
+1. Submit a clearly marked test ticket; verify L1 labels/queue, automatic assignment to Cédric, and a reply.
 2. Escalate with handover, label replacement, and reassignment; verify the same ID, answers, and comments.
 3. For the next real fix, verify branch/commit/PR references, review, CI, deployment, and `/health` before resolution.
 4. Close the test as Not planned with an explanation; verify timestamps and escalation history through the API.
 
 Verified through GitHub CLI on 2026-10-26: the repository is public, Issues are enabled, and the existing collaborators have Write access or higher. Created and re-read `support`, `support:l1`, and `support:l2`; `bug` already exists. The ticket API request succeeds and returned no support tickets at verification. Both jobs in the [CI run for main at initial verification](https://github.com/cediackermann/m324-gruppe3/actions/runs/40287595966) passed.
 
-`main` reported `protected: false`, and its effective rules list was empty. Admin setup remains necessary. The team must also name its L1/L2 supporters. The form becomes available after this branch is reviewed and merged into `main`; customer submission and live escalation acceptance remain pending until then.
+`main` reported `protected: false`, and its effective rules list was empty. Branch protection remains optional for the demonstration. Support responsibilities are agreed as Cédric (L1) and Ramis (L2). The form becomes available after this branch is reviewed and merged into `main`; customer submission and live escalation acceptance remain pending until then.

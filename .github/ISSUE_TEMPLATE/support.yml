@@ -2,6 +2,7 @@ name: Customer support
 description: Report a problem or ask for help with Bike Tours.
 title: "[Support] "
 labels: ["support", "support:l1"]
+assignees: ["cediackermann"]
 body:
   - type: markdown
     attributes:
