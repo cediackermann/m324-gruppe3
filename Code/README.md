@@ -66,6 +66,10 @@ The active CI workflow is at the repository root, `.github/workflows/ci.yml`. It
 
 Every commit on `main` that passes CI is deployed automatically to Render (API) and Neon (PostgreSQL), both on free tiers: Render's auto-deploy waits until all GitHub Actions checks on the commit have passed. `GET /health` reports the running commit in `version`. Live: <https://m324-gruppe3.onrender.com/health>. Setup, rollback, secrets, and monitoring are described in [`docs/cd.md`](docs/cd.md). The reasons for this solution and the variants that were tried are in [`docs/cd-decisions.md`](docs/cd-decisions.md).
 
+## Customer support (Z2)
+
+Customer tickets use GitHub Issues with first- and second-level support on the same ticket. See [`docs/ticketing.md`](docs/ticketing.md) for the form, one-time setup, escalation, bugfix workflow, and data available to Z1.
+
 ## Project layout
 
 `src/bikes/` and `src/tours/` each contain routes, service, repository, model, and migrations. The single entry point is `src/server.ts`. `render.yaml` at the repository root describes the Render service. Shared application wiring, validation, errors, and database helpers live under `src/` and `src/shared/`; `src/shared/migrations.ts` lists every module's migrations in order. The endpoint unit tests mirror their modules under `tests/unit/`; shared test helpers live in `tests/helpers/`.
