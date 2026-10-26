@@ -97,6 +97,20 @@ jobs:
       - name: Check bike and tour workflow
         run: bun tests/system/smoke.ts
 
+      # Only main is published. The image that passed the system test is
+      # handed to the publish job as is, so the registry gets exactly the
+      # tested bytes instead of a rebuild.
+      - name: Save tested image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker save "biketouren:$GITHUB_SHA" | gzip > image.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: biketouren-image
+          path: Code/image.tar.gz
+          retention-days: 1
+
       - name: Show logs on failure
         if: failure()
         run: docker compose logs
@@ -104,3 +118,61 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down -v
+
+  publish:
+    name: Publish image to GHCR
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # GITHUB_TOKEN may push packages of this repository only; no other
+    # secret is needed.
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/cediackermann/biketouren
+    # No checkout: this job only handles the image from docker-build.
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: biketouren-image
+
+      - name: Load tested image
+        run: gunzip -c image.tar.gz | docker load
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      # sha-<commit> is immutable and identifies the artifact; main always
+      # points to the newest tested commit on main.
+      - name: Tag and push
+        run: |
+          for tag in "sha-$GITHUB_SHA" main; do
+            docker tag "biketouren:$GITHUB_SHA" "$IMAGE:$tag"
+            docker push "$IMAGE:$tag"
+          done
+
+      - name: Report published artifact
+        run: |
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:sha-$GITHUB_SHA")
+          version=$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$IMAGE:sha-$GITHUB_SHA")
+          echo "Published $IMAGE:sha-$GITHUB_SHA ($digest), revision label $version"
+          {
+            echo "## Published artifact"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Image | \`$IMAGE\` |"
+            echo "| Tags | \`sha-$GITHUB_SHA\`, \`main\` |"
+            echo "| Digest | \`${digest#*@}\` |"
+            echo "| Revision label | \`$version\` |"
+            echo
+            echo "\`\`\`bash"
+            echo "docker pull $IMAGE:sha-$GITHUB_SHA"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"

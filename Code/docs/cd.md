@@ -10,7 +10,8 @@ Why this solution was chosen, the variants that were tried, and the evidence for
 flowchart TD
     A["Merge to main"] --> B["GitHub Actions: test (format, lint, types, unit and integration tests)"]
     B --> C["GitHub Actions: docker-build (image biketouren:SHA, Compose system test)"]
-    C --> D{"All checks passed?"}
+    C --> P["GitHub Actions: publish (push the tested image to GHCR as sha-SHA and main)"]
+    P --> D{"All checks passed?"}
     D -->|Yes| E["Render builds and deploys the commit"]
     D -->|No| F["Render skips the commit; the previous version keeps running"]
     E --> G["The app applies pending migrations to Neon and starts"]
@@ -18,7 +19,7 @@ flowchart TD
 
 ## How it works
 
-- **GitHub Actions** ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)) runs the `test` and `docker-build` jobs on every push to `main`, as on every branch and pull request.
+- **GitHub Actions** ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)) runs the `test` and `docker-build` jobs on every push to `main`, as on every branch and pull request. On `main` it also runs `publish`, which pushes the tested image to `ghcr.io/cediackermann/biketouren` ([`artifacts.md`](artifacts.md)).
 - **Render** watches `main` with the auto-deploy trigger **After CI checks pass** ([`render.yaml`](../../render.yaml)). It waits until every check on the new commit has finished. If all of them succeed, it builds the Dockerfile and deploys that commit. If any check fails, it does not deploy, and the previous version keeps running. Render only deploys when files under `Code/` (its root directory) change.
 - **On startup** the app applies pending database migrations to Neon, then starts serving requests (see the migration notes in [`src/shared/migrations.ts`](../src/shared/migrations.ts)).
 - **`GET /health`** queries the database and reports the running commit in `version` (Render sets `RENDER_GIT_COMMIT`), so you can always see which commit is live.
