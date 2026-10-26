@@ -1,6 +1,9 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
     image: biketouren:${APP_VERSION:-dev}
     ports:
       - "3000:3000"

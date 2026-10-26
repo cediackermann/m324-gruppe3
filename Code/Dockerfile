@@ -23,6 +23,20 @@ COPY --from=deps /srv/node_modules ./node_modules
 COPY package.json bun.lock ./
 COPY src ./src
 
+# The commit the image was built from. CI passes it, so a published image
+# reports its own version in /health and carries it as an OCI label; on
+# Render, RENDER_GIT_COMMIT takes precedence (see src/server.ts).
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+# Also overrides the labels inherited from the Bun base image, which would
+# otherwise describe Bun instead of this app.
+LABEL org.opencontainers.image.source="https://github.com/cediackermann/m324-gruppe3" \
+      org.opencontainers.image.url="https://github.com/cediackermann/m324-gruppe3" \
+      org.opencontainers.image.revision=$APP_VERSION \
+      org.opencontainers.image.version=$APP_VERSION \
+      org.opencontainers.image.title="biketouren" \
+      org.opencontainers.image.description="Bike Tours API (M324 Gruppe 3)"
+
 # DATABASE_URL is required and set by Docker Compose or the hosting platform.
 USER bun
 ENV PORT=3000 \

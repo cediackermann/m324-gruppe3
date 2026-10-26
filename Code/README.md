@@ -60,7 +60,7 @@ bun tests/system/smoke.ts
 
 Unit tests use fake repositories, a fake bike lookup, and a fake SQL client; they need no database or network. Integration tests run the full app and the migrations against a real PostgreSQL database. They read `TEST_DATABASE_URL` (never `DATABASE_URL`), delete all data in it before each test, and refuse to run unless the database name contains `test`. The system smoke test requires the running Compose stack (or `BASE_URL`) and is executed in CI.
 
-The active CI workflow is at the repository root, `.github/workflows/ci.yml`. Its build produces a Docker image tagged with the commit SHA for later artifact publishing. The job structure and test stages are described in [`docs/ci.md`](docs/ci.md).
+The active CI workflow is at the repository root, `.github/workflows/ci.yml`. Its build produces a Docker image tagged with the commit SHA; on `main` that tested image is published to the GitHub Container Registry as `ghcr.io/cediackermann/biketouren:sha-<SHA>` (see [`docs/artifacts.md`](docs/artifacts.md)). The job structure and test stages are described in [`docs/ci.md`](docs/ci.md).
 
 ## Deployment
 
