@@ -64,7 +64,7 @@ The active CI workflow is at the repository root, `.github/workflows/ci.yml`. It
 
 ## Deployment
 
-Every commit on `main` that passes CI is deployed automatically to Render (API) and Neon (PostgreSQL), both on free tiers: Render's auto-deploy waits until all GitHub Actions checks on the commit have passed. `GET /health` reports the running commit in `version`. Live: <https://m324-gruppe3.onrender.com/health>. Setup, rollback, secrets, and monitoring are described in [`docs/cd.md`](docs/cd.md).
+Every commit on `main` that passes CI is deployed automatically to Render (API) and Neon (PostgreSQL), both on free tiers: Render's auto-deploy waits until all GitHub Actions checks on the commit have passed. `GET /health` reports the running commit in `version`. Live: <https://m324-gruppe3.onrender.com/health>. Setup, rollback, secrets, and monitoring are described in [`docs/cd.md`](docs/cd.md). The reasons for this solution and the variants that were tried are in [`docs/cd-decisions.md`](docs/cd-decisions.md).
 
 ## Project layout
 
