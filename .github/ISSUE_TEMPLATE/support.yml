@@ -1,0 +1,42 @@
+name: Customer support
+description: Report a problem or ask for help with Bike Tours.
+title: "[Support] "
+labels: ["support", "support:l1"]
+assignees: ["cediackermann"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        First-level support will review your ticket and reply here.
+        Check existing tickets before submitting. Do not include passwords, database URLs, or personal data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or question
+      description: What happened, or what do you need help with? Include any error message without sensitive data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: What should happen instead, or what outcome do you need?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: For a bug, list the steps or API request that caused the problem. Remove sensitive values.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment and version
+      description: Local Docker or production? If available, include the version from GET /health.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Which task is affected? Is there a workaround?
+    validations:
+      required: true
